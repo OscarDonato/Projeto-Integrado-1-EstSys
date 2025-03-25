@@ -1,0 +1,30 @@
+<div class="container">
+  <h2>Cadastro de Clientes</h2>
+  <form [formGroup]="clienteForm" (ngSubmit)="onSubmit()">
+    <div class="form-group">
+      <label for="nome">Nome:</label>
+      <input type="text" id="nome" formControlName="nome" class="form-control" />
+      <div *ngIf="clienteForm.get('nome')?.invalid && clienteForm.get('nome')?.touched" class="text-danger">
+        Nome é obrigatório.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="email">E-mail:</label>
+      <input type="email" id="email" formControlName="email" class="form-control" />
+      <div *ngIf="clienteForm.get('email')?.invalid && clienteForm.get('email')?.touched" class="text-danger">
+        E-mail é obrigatório e deve ser um e-mail válido.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="telefone">Telefone:</label>
+      <input type="text" id="telefone" formControlName="telefone" class="form-control" />
+      <div *ngIf="clienteForm.get('telefone')?.invalid && clienteForm.get('telefone')?.touched" class="text-danger">
+        Telefone é obrigatório.
+      </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary" [disabled]="clienteForm.invalid">Cadastrar</button>
+  </form>
+</div>
