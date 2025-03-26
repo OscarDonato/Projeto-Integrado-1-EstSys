@@ -1,28 +1,21 @@
-import { Component, OnInit } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-cadastro-cliente',
   templateUrl: './cadastro-cliente.component.html',
   styleUrls: ['./cadastro-cliente.component.css']
 })
-export class CadastroClienteComponent implements OnInit {
-  clienteForm: FormGroup;
+export class CadastroClienteComponent {
+  cliente = {
+    nome: '',
+    email: '',
+    telefone: ''
+  };
 
-  constructor(private fb: FormBuilder) {
-    this.clienteForm = this.fb.group({
-      nome: ['', Validators.required],
-      email: ['', [Validators.required, Validators.email]],
-      telefone: ['', Validators.required]
-    });
-  }
-
-  ngOnInit(): void {}
-
-  onSubmit() {
-    if (this.clienteForm.valid) {
-      console.log('Formulário enviado:', this.clienteForm.value);
-      // Aqui você pode enviar os dados para o servidor
+  onSubmit(form: any) {
+    if (form.valid) {
+      console.log('Cadastro realizado com sucesso', this.cliente);
+      // Aqui você pode enviar os dados para uma API ou serviço
     } else {
       console.log('Formulário inválido');
     }

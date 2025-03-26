@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { ReactiveFormsModule } from '@angular/forms'; // Importando ReactiveFormsModule
+import { FormsModule } from '@angular/forms';  // Importando FormsModule
 
 import { AppComponent } from './app.component';
 import { CadastroClienteComponent } from './cadastro-cliente/cadastro-cliente.component';
@@ -12,7 +12,7 @@ import { CadastroClienteComponent } from './cadastro-cliente/cadastro-cliente.co
   ],
   imports: [
     BrowserModule,
-    ReactiveFormsModule // Adicionando ReactiveFormsModule aqui
+    FormsModule  // Adicionando FormsModule aqui
   ],
   providers: [],
   bootstrap: [AppComponent]
