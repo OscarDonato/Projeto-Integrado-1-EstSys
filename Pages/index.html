@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estetsys</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="../scripts/setup.js"></script>
+  </head>
+
+  <body>
+    <div class="interface">
+      <header>
+        <div class="display_logo">
+          <img src="../images/logo.png" alt="Logo" class="logo" />
+          <h1>Estetsys</h1>
+        </div>
+        <nav>
+          <ul class="menu">
+            <li><a onclick="showTab('products')" href="#">PRODUTOS</a></li>
+            <li><a onclick="showTab('clients')" href="#">CLIENTES</a></li>
+            <li><a onclick="showTab('services')" href="#">SERVIÇOS</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <div class="cad_products">
+        <section id="products">
+          <h2>PRODUTOS</h2>
+          <input type="text" id="productName" placeholder="Nome do Produto" />
+          <input
+            type="number"
+            id="productPrice"
+            placeholder="Preço"
+            step="0.01"
+          />
+          <button onclick="addProduct()">Adicione um produto</button>
+          <table>
+            <tr>
+              <th>Nome</th>
+              <th>Preço</th>
+            </tr>
+            <tbody id="product-list"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="cad_customers">
+        <section id="clients">
+          <h2>CLIENTES</h2>
+          <input type="text" id="clientName" placeholder="Nome do Cliente" />
+          <input
+            type="text"
+            id="clientCPF"
+            placeholder="CPF (xxx.xxx.xxx-xx)"
+            maxlength="14"
+          />
+
+          <input
+            type="text"
+            id="clientPhone"
+            placeholder="Celular (xx) xxxxx-xxxx"
+            maxlength="15"
+          />
+
+          <button onclick="addClient()">Adicione um cliente</button>
+          <table>
+            <tr>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>Telefone</th>
+            </tr>
+            <tbody id="client-list"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="cad_services">
+        <section id="services">
+          <h2>SERVIÇOS</h2>
+          <input type="text" id="serviceName" placeholder="Nome do serviço" />
+          <input
+            type="number"
+            id="servicePrice"
+            placeholder="Preço"
+            step="0.01"
+          />
+
+          <button onclick="addService()">Adicione um serviço</button>
+          <table>
+            <tr>
+              <th>Nome</th>
+              <th>Preço</th>
+            </tr>
+            <tbody id="service-list"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
