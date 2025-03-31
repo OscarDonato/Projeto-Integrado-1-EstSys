@@ -11,8 +11,7 @@ function addProduct() {
     document.getElementById("productPrice").value
   ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   if (name && price) {
-    const row = `<tr><td>${name}</td><td>${price}</td>
-        <td>
+    const row = `<tr><td>${name}</td><td>${price}
             <button class='edit-btn' onclick='editRow(this)'>✏️</button>
             <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
         </td></tr>`;

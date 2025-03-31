@@ -126,7 +126,8 @@ button.addItem:hover {
 }
 
 table.display_table {
-  display: grid;
+  width: 400px;
+  text-align: center;
 }
 
 /* Fim do estilo das sections */
