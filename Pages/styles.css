@@ -80,43 +80,53 @@ header nav {
 
 /* Início do estilo das sections*/
 
-.cad_products section {
+.cad section {
   background-color: #ffe9fa;
   margin: 20px auto;
   padding: 20px;
   border-radius: 10px;
   width: 80%;
-  height: 200px;
+  height: auto;
   box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.384);
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   /* display none altera para aparecer no setup */
   display: none;
 }
 
-.cad_customers section {
-  background-color: #ffe9fa;
-  margin: 20px auto;
-  padding: 20px;
-  border-radius: 10px;
-  width: 80%;
-  height: 200px;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.384);
-  flex-direction: column;
-  /* display none altera para aparecer no setup */
-  display: none;
+.cad input {
+  font-size: 20px;
+  width: 450px;
+  height: 30px;
+  margin-top: 10px;
+  border-radius: 5px;
 }
 
-.cad_services section {
-  background-color: #ffe9fa;
-  margin: 20px auto;
-  padding: 20px;
+button.addItem {
+  font-size: 20px;
+  height: 55px;
+  width: 140px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  background-color: #64004b;
   border-radius: 10px;
-  width: 80%;
-  height: 200px;
-  box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.384);
-  flex-direction: column;
-  /* display none altera para aparecer no setup */
-  display: none;
+  border-style: none;
+  color: #ffffff;
+}
+
+button.addItem:hover {
+  background-color: #64004b;
+  border-radius: 10px;
+  border-style: solid;
+  border-width: 2px;
+  box-shadow: 2px 2px 5px #000000;
+  color: #a5a5a5;
+  cursor: pointer;
+}
+
+table.display_table {
+  display: grid;
 }
 
 /* Fim do estilo das sections */
