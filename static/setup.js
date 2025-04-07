@@ -6,16 +6,38 @@ function showTab(tabId) {
 }
 
 function addProduct() {
-  const name = document.getElementById("productName").value;
+    const name = document.getElementById('productName').value;
+    const priceInput = document.getElementById('productPrice').value;
+    const priceFloat = parseFloat(priceInput);
+
+    if (name && !isNaN(priceFloat)) {
+        const priceFormatted = priceFloat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+        const row = `<tr>
+            <td>${name}</td>
+            <td data-raw-price="${priceFloat}">${priceFormatted}</td>
+            <td>
+                <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+                <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+            </td>
+        </tr>`;
+        document.getElementById('product-list').innerHTML += row;
+    }
+}
+
+
+function addService() {
+  const name = document.getElementById("serviceName").value;
   const price = parseFloat(
-    document.getElementById("productPrice").value
+    document.getElementById("servicePrice").value
   ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
   if (name && price) {
-    const row = `<tr><td>${name}</td><td>${price}
+    const row = `<tr><td>${name}</td><td>${price}</td>
+        <td>
             <button class='edit-btn' onclick='editRow(this)'>✏️</button>
             <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
         </td></tr>`;
-    document.getElementById("product-list").innerHTML += row;
+    document.getElementById("service-list").innerHTML += row;
   }
 }
 
@@ -35,18 +57,36 @@ function addClient() {
   }
 }
 
-function addService() {
-  const name = document.getElementById("serviceName").value;
-  const price = parseFloat(
-    document.getElementById("servicePrice").value
-  ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  if (name && price) {
-    const row = `<tr><td>${name}</td><td>${price}</td>
-        <td>
-            <button class='edit-btn' onclick='editRow(this)'>✏️</button>
-            <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
-        </td></tr>`;
-    document.getElementById("service-list").innerHTML += row;
+function addClient() {
+  const name = document.getElementById("clientName").value;
+  let cpf = document.getElementById("clientCPF").value.replace(/\D/g, ""); // Removendo todos os caracteres que não são números
+  let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
+
+  // Validação do CPF (Deve conter exatamente 11 digitos)
+  if (cpf.length !== 11) {
+      alert("ERRO!\n(CPF deve conter 11 números E seguir formato XXX.XXX.XXX-XX)");
+      return;
+  }
+  
+  // Validação do número (Deve conter 11 digitos, incluindo o código de área)
+  if (phone.length !== 11) {
+      alert("ERRO!\n(Número de telefone deve conter 11 números E seguir formato (XX) XXXXX-XXXX)");
+      return;
+  }
+
+  // Formatando o CPF para: XXX.XXX.XXX-XX
+  cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+
+  // Formatando o Telefone para (XX) XXXXX-XXXX
+  phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+
+  if (name && cpf && phone) {
+      const row = `<tr><td>${name}</td><td>${cpf}</td><td>${phone}</td>
+          <td>
+              <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+              <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+          </td></tr>`;
+      document.getElementById("client-list").innerHTML += row;
   }
 }
 
