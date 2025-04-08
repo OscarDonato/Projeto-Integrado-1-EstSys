@@ -2,6 +2,7 @@ from flask import Flask, request, redirect, url_for, jsonify, render_template
 from flask_cors import CORS
 
 produtos = []
+services = []
 
 app = Flask(__name__)
 CORS(app)  # permite que o frontend chame o backend, especialmente útil localmente
@@ -29,6 +30,22 @@ def cad_prod():
 
     produtos.append([nome, preco])
     return "Produto adicionado com sucesso"
+
+@app.route('/cad_serv', methods=["POST"])
+def cad_serv():
+    nome = request.form.get('serviceName','').strip()
+    preco_raw = request.form.get('servicePrice', '').strip()
+
+    if not nome or not preco_raw:
+        return "\nDados incompletos", 400
+
+    try:
+        preco = float(preco_raw)
+    except ValueError:
+        return "Preço inválido", 400
+
+    services.append([nome, preco])
+    return "Serviço adicionado com sucesso"
 
 if __name__ == '__main__':
     app.run(debug=True)

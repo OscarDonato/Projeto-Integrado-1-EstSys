@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -79,17 +79,11 @@
       <div class="cad">
         <section id="services">
           <h2>SERVIÇOS</h2>
-          <input type="text" id="serviceName" placeholder="Nome do serviço" />
-          <input
-            type="number"
-            id="servicePrice"
-            placeholder="Preço"
-            step="0.01"
-          />
-
-          <button onclick="addService()" class="addItem">
-            Adicione um serviço
-          </button>
+          <form id="serviceForm" onsubmit="addService(event)" class="formul">
+            <input type="text" id="serviceName" name="serviceName" placeholder="Nome do serviço" />
+            <input type="number" id="servicePrice" name="servicePrice" placeholder="Preço" step="0.01" />
+            <button type="submit" class="addItem">Adicione um serviço</button>
+          </form>
           <table class="display_table">
             <tr>
               <th class="item">Nome</th>
