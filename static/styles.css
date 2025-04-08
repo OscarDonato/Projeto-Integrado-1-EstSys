@@ -95,6 +95,12 @@ header nav {
   display: none;
 }
 
+.formul {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 .cad input {
   font-size: 20px;
   width: 450px;

@@ -5,26 +5,68 @@ function showTab(tabId) {
   document.getElementById(tabId).style.display = "flex";
 }
 
-function addProduct() {
-    const name = document.getElementById('productName').value;
-    const priceInput = document.getElementById('productPrice').value;
-    const priceFloat = parseFloat(priceInput);
+// add product antiga:
+//
+// function addProduct() {
+//     const name = document.getElementById('productName').value;
+//     const priceInput = document.getElementById('productPrice').value;
+//     const priceFloat = parseFloat(priceInput);
 
-    if (name && !isNaN(priceFloat)) {
-        const priceFormatted = priceFloat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+//     if (name && !isNaN(priceFloat)) {
+//         const priceFormatted = priceFloat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-        const row = `<tr>
-            <td>${name}</td>
-            <td data-raw-price="${priceFloat}">${priceFormatted}</td>
-            <td>
-                <button class='edit-btn' onclick='editRow(this)'>✏️</button>
-                <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
-            </td>
-        </tr>`;
-        document.getElementById('product-list').innerHTML += row;
-    }
+//         const row = `<tr>
+//             <td>${name}</td>
+//             <td data-raw-price="${priceFloat}">${priceFormatted}</td>
+//             <td>
+//                 <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+//                 <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+//             </td>
+//         </tr>`;
+//         document.getElementById('product-list').innerHTML += row;
+//     }
+// }
+
+function addProduct(event) {
+  event.preventDefault();  // <- ESSENCIAL para impedir o recarregamento
+
+  //recebe o formulário como um elemento só a partir de "event"
+  const form = event.target;
+  const name = form.productName.value;
+  const priceInput = form.productPrice.value;
+  const priceFloat = parseFloat(priceInput);
+
+  if (name && !isNaN(priceFloat)) {
+    const formData = new FormData(form);
+
+    fetch('/cad_prod', {  // manda o formulário para o flask
+      method: 'POST',
+      body: formData
+    })
+
+    //recebe de volta do flask
+    .then(res => res.ok ? res.text() : res.text().then(t => { throw new Error(t); })) 
+    .then(() => {
+      const priceFormatted = priceFloat.toLocaleString('pt-BR', {
+        style: 'currency',
+        currency: 'BRL'
+      });
+
+      const row = `<tr>
+        <td>${name}</td>
+        <td>${priceFormatted}</td>
+        <td>
+          <button onclick="editRow(this)">✏️</button>
+          <button onclick="deleteRow(this)">🗑️</button>
+        </td>
+      </tr>`;
+      document.getElementById('product-list').innerHTML += row;
+
+      form.reset(); // limpa os campos
+    })
+    .catch(err => alert("Erro: " + err.message));
+  }
 }
-
 
 function addService() {
   const name = document.getElementById("serviceName").value;
@@ -41,21 +83,23 @@ function addService() {
   }
 }
 
-function addClient() {
-  const name = document.getElementById("clientName").value;
-  let cpf = document.getElementById("clientCPF").value.replace(/\D/g, "");
-  cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
-  phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-  if (name && cpf && phone) {
-    const row = `<tr><td>${name}</td><td>${cpf}</td><td>${phone}</td>
-        <td>
-            <button class='edit-btn' onclick='editRow(this)'>✏️</button>
-            <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
-        </td></tr>`;
-    document.getElementById("client-list").innerHTML += row;
-  }
-}
+
+//Função antiga addClient
+// function addClient() {
+//   const name = document.getElementById("clientName").value;
+//   let cpf = document.getElementById("clientCPF").value.replace(/\D/g, "");
+//   cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+//   let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
+//   phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+//   if (name && cpf && phone) {
+//     const row = `<tr><td>${name}</td><td>${cpf}</td><td>${phone}</td>
+//         <td>
+//             <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+//             <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+//         </td></tr>`;
+//     document.getElementById("client-list").innerHTML += row;
+//   }
+// }
 
 function addClient() {
   const name = document.getElementById("clientName").value;

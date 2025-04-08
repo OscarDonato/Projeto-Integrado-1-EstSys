@@ -12,18 +12,11 @@
     <nav>
         <ul class="menu">
           <li><a href="#">VENDAS</a></li>
-          <li><a href="/red_cadastros">CADASTROS</a></li>
+          <li><a href="/cadastros">CADASTROS</a></li>
           <li><a href="#">SERVIÇOS</a></li>
         </ul>
       </nav>
 </nav>
 
-<script>
-    async function buscarMensagem() {
-      const resposta = await fetch('/mensagem');
-      const dados = await resposta.json();
-      document.getElementById("resposta").innerText = dados.resposta;
-    }
-  </script>
 </body>
 </html>
