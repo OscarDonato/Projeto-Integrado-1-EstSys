@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estetsys</title>
+    <link rel="stylesheet" href="../static/styles.css" />
+    <script src="../static/setup.js"></script>
+  </head>
+
+  <body>
+    <div class="interface">
+      <header>
+        <div class="display_logo">
+          <img src="../static/logo.png" alt="Logo" class="logo" />
+          <h1>Estetsys</h1>
+        </div>
+        <nav>
+          <ul class="menu">
+            <li><a onclick="showTab('products')" href="#">PRODUTOS</a></li>
+            <li><a onclick="showTab('clients')" href="#">CLIENTES</a></li>
+            <li><a onclick="showTab('services')" href="#">SERVIÇOS</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <div class="cad">
+        <section id="products">
+          <h2>PRODUTOS</h2>
+
+            <form id="productForm" onsubmit="addProduct(event)" class="formul">
+              <input type="text" name="productName" placeholder="Nome do Produto" />
+              <input type="number" name="productPrice" placeholder="Preço" step="0.01"/>
+              <button type="submit" class="addItem">Adicione um produto</button>
+            </form>
+
+          <table class="display_table">
+            <tr>
+              <th class="item">Nome</th>
+              <th class="item">Preço</th>
+            </tr>
+            <tbody id="product-list"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="cad">
+        <section id="clients">
+          <h2>CLIENTES</h2>
+          <input type="text" id="clientName" placeholder="Nome do Cliente" />
+          <input
+            type="text"
+            id="clientCPF"
+            placeholder="CPF (xxx.xxx.xxx-xx)"
+            maxlength="14"
+          />
+
+          <input
+            type="text"
+            id="clientPhone"
+            placeholder="Celular (xx) xxxxx-xxxx"
+            maxlength="15"
+          />
+
+          <button onclick="addClient()" class="addItem">
+            Adicione um cliente
+          </button>
+          <table class="display_table">
+            <tr>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>Telefone</th>
+            </tr>
+            <tbody id="client-list"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <div class="cad">
+        <section id="services">
+          <h2>SERVIÇOS</h2>
+          <form id="serviceForm" onsubmit="addService(event)" class="formul">
+            <input type="text" id="serviceName" name="serviceName" placeholder="Nome do serviço" />
+            <input type="number" id="servicePrice" name="servicePrice" placeholder="Preço" step="0.01" />
+            <button type="submit" class="addItem">Adicione um serviço</button>
+          </form>
+          <table class="display_table">
+            <tr>
+              <th class="item">Nome</th>
+              <th class="item">Preço</th>
+            </tr>
+            <tbody id="service-list"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
