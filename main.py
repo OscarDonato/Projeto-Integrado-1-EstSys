@@ -40,12 +40,12 @@ def get_db_connection():
 @app.route('/add_cliente', methods=['POST'])
 def add_cliente():
     data = request.form
-    ad_CLI_CODIGO = data.get('xxxxx', '').strip()
-	ad_CLI_NOME = data.get('xxxxx', '').strip()
-	ad_CLI_ENDERECO	= data.get('xxxxx', '').strip()
-	ad_CLI_TEL = data.get('xxxxx', '').strip()
-	ad_CLI_DOC = data.get('xxxxx', '').strip()
-	ad_CLI_OBSERVA = data.get('xxxxx', '').strip()
+    ad_CLI_CODIGO = data.get('clientCPF', '').strip()
+    ad_CLI_NOME = data.get('clientName', '').strip()
+    ad_CLI_ENDERECO	= data.get('clientAddress', '').strip() + data.get('clientComplement', '').strip() + data.get('clientCEP', '').strip()
+    ad_CLI_TEL = data.get('clientPhone', '').strip()
+    ad_CLI_DOC = data.get('clientCPF', '').strip()
+    ad_CLI_OBSERVA = data.get('clientNote', '').strip()
 
     if not ad_CLI_CODIGO or not ad_CLI_NOME or not ad_CLI_ENDERECO or not ad_CLI_TEL or not ad_CLI_DOC:
         return "Dados incompletos", 400
@@ -55,9 +55,9 @@ def add_cliente():
     
     try:
         # Chamando a procedure de inclusão de dados na tabela de cadastro de produtos
-        cur.callproc( 'add_cliente', (ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
+        cur.callproc( 'add_cliente', ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
         conn.commit()
-        response = {"message": "Produto adicionado com sucesso!"}
+        response = {"message": "Cliente adicionado com sucesso!"}
     except Exception as e:
         response = {"error": str(e)}
         conn.rollback()
@@ -103,7 +103,7 @@ def dlt_produto():
     data = request.form
     dlt_PRD_CODIGO  = data.get('productName', '').strip()
 
-    if not dlt_PRD_CODIGO
+    if not dlt_PRD_CODIGO:
         return "Dados incompletos", 400
     
     conn = get_db_connection()
@@ -190,7 +190,7 @@ def dlt_produto():
     data = request.form
     dlt_PRD_CODIGO  = data.get('productName', '').strip()
 
-    if not dlt_PRD_CODIGO
+    if not dlt_PRD_CODIGO:
         return "Dados incompletos", 400
     
     conn = get_db_connection()
@@ -277,7 +277,7 @@ def dlt_produto():
     data = request.form
     dlt_PRD_CODIGO  = data.get('productName', '').strip()
 
-    if not dlt_PRD_CODIGO
+    if not dlt_PRD_CODIGO:
         return "Dados incompletos", 400
     
     conn = get_db_connection()
