@@ -11,35 +11,40 @@
 --	Data:	10/04/2025																					--
 --------------------------------------------------------------------------------------------------------
 
-
-
 -------------------------------------------------------------------------------------
 -- Passo 1:																			--
---	Criação de dominios para facilitar a manutenção do tamanho de um campo, assim	--
---	caso precise alterar um campo fica mais facil.									--
+--	Criação do usuario que vai administrar o banco e vai fazer integração com ele	--
 -------------------------------------------------------------------------------------
-Create Domain dm_nome Varchar(150)		Not Null	;
-Create DOMAIN dm_nmet Varchar(150)					;
-Create DOMAIN dm_ende Varchar(150)					;
-Create DOMAIN dm_tele Varchar(20)					;
-Create DOMAIN dm_docm Varchar(50)					;
-Create DOMAIN dm_codi Numeric(10) 		Not Null	;
-Create DOMAIN dm_cdet Numeric(10) 					;
-Create DOMAIN dm_prec Numeric(10, 2)	Default 0	;
-Create DOMAIN dm_qtda Numeric(10) 		Default 0	;
-Create DOMAIN dm_obse Varchar(500)		Default ''	;
-Create DOMAIN dm_delt Varchar(1)					;
-Create DOMAIN dm_recn Bigint			Not Null	;
-Create DOMAIN dm_rcdl Bigint			Default 0	;
+Create Role estetsys With LOGIN Password 'estetsys' SUPERUSER;
 
 
 -------------------------------------------------------------------------------------
 -- Passo 2:																			--
+--	Criação de dominios para facilitar a manutenção do tamanho de um campo, assim	--
+--	caso precise alterar um campo fica mais facil.									--
+-------------------------------------------------------------------------------------
+Create Domain dm_nome Varchar(150)		Not Null	;
+Create Domain dm_nmet Varchar(150)					;
+Create Domain dm_ende Varchar(150)					;
+Create Domain dm_tele Varchar(20)					;
+Create Domain dm_docm Varchar(50)					;
+Create Domain dm_codi Numeric(10) 		Not Null	;
+Create Domain dm_cdet Numeric(10) 					;
+Create Domain dm_prec Numeric(10, 2)	Default 0	;
+Create Domain dm_qtda Numeric(10) 		Default 0	;
+Create Domain dm_obse Varchar(500)		Default ''	;
+Create Domain dm_delt Varchar(1)					;
+Create Domain dm_recn Bigint			Not Null	;
+Create Domain dm_rcdl Bigint			Default 0	;
+
+
+-------------------------------------------------------------------------------------
+-- Passo 3:																			--
 --	Criação da tabela de cadastro de cliente, de Triggers, Funções e Procedures	--
 -------------------------------------------------------------------------------------
 
 -----------
---	Cria Tabela Cliente
+--	3.1 Cria Tabela Cliente
 -----------
 Create Table CLIENTE(
 	CLI_CODIGO		dm_codi Unique,
@@ -56,7 +61,7 @@ Create Table CLIENTE(
 );
 
 -----------
---	Cria Trigger para autoimplementação do recno
+--	3.2 Cria Trigger para autoimplementação do recno
 -----------
 Create Or Replace Function set_recno_client()
 Returns Trigger As $$
@@ -72,7 +77,7 @@ For Each Row
 Execute Function set_recno_client();
 
 -----------
---	Cria Procedure para inclusão de dados na tabela de clientes
+--	3.3 Cria Procedure para inclusão de dados na tabela de clientes
 -----------
 Create Or Replace Procedure add_cliente(
     ad_CLI_CODIGO	dm_codi,
@@ -90,7 +95,7 @@ End;
 $$;
 
 -----------
---	Cria Procedure para alterar registro dos dados na tabela de clientes
+--	3.4 Cria Procedure para alterar registro dos dados na tabela de clientes
 -----------
 Create Or Replace Procedure alte_cliente(
     alte_recno			dm_recn,
@@ -121,14 +126,14 @@ $$;
 
 
 -----------
---	Cria Procedure para "deletar" registro dos dados na tabela de clientes
+--	3.5 Cria Procedure para "deletar" registro dos dados na tabela de clientes
 -----------
 Create Or Replace Procedure dlt_cliente(
     dlt_recno		dm_recn
 )
 Language plpgsql As $$
 Begin
-    Update CLIENTE Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ Where R_E_C_N_O_ = dlt_recno
+    Update CLIENTE Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = dlt_recno Where R_E_C_N_O_ = dlt_recno;
 End;
 $$;
 
@@ -143,12 +148,12 @@ $$;
 
 
 -------------------------------------------------------------------------------------
--- Passo 3:																			--
+-- Passo 4:																			--
 --	Criação da tabela de cadastro de produto, de Triggers, Funções e Procedures	--
 -------------------------------------------------------------------------------------
 
 -----------
---	Cria Tabela Produto
+--	4.1 Cria Tabela Produto
 -----------
 Create Table PRODUTO(
 	PRD_CODIGO		dm_codi UNIQUE,
@@ -163,7 +168,7 @@ Create Table PRODUTO(
 );
 
 -----------
---	Cria Trigger para autoimplementação do recno
+--	4.2 Cria Trigger para autoimplementação do recno
 -----------
 Create Or Replace Function set_recno_prod()
 Returns Trigger As $$
@@ -179,7 +184,7 @@ For Each Row
 Execute Function set_recno_prod();
 
 -----------
---	Cria Procedure para inclusão de dados na tabela de Produto
+--	4.3 Cria Procedure para inclusão de dados na tabela de Produto
 -----------
 Create Or Replace Procedure add_produto(
     ad_PRD_CODIGO	dm_codi,
@@ -195,7 +200,7 @@ End
 $$;
 
 -----------
---	Cria Procedure para alterar registro dos dados na tabela de Produto
+--	4.4 Cria Procedure para alterar registro dos dados na tabela de Produto
 -----------
 Create Or Replace Procedure alte_produto(
     alte_recno			dm_recn,
@@ -220,7 +225,7 @@ $$;
 
 
 -----------
---	Cria Procedure para "deletar" registro dos dados na tabela de Produto
+--	4.5 Cria Procedure para "deletar" registro dos dados na tabela de Produto
 -----------
 Create Or Replace Procedure dlt_produto(
     dlt_recno		dm_recn
@@ -245,10 +250,13 @@ $$;
 
 
 -------------------------------------------------------------------------------------
--- Passo 4:																			--
+-- Passo 5:																			--
 --	Criação da tabela de cadastro de produto, de Triggers, Funções e Procedures	--
 -------------------------------------------------------------------------------------
 
+-----------
+--	5.1 Cria Tabela Servico
+-----------
 Create Table SERVICO(
 	SRV_CODIGO		dm_codi UNIQUE,
 	SRV_NOME		dm_nome,
@@ -276,7 +284,7 @@ Execute Function set_recno_servico();
 
 
 -----------
---	Cria Procedure para inclusão de dados na tabela de Servico
+--	5.2 Cria Procedure para inclusão de dados na tabela de Servico
 -----------
 Create Or Replace Procedure add_servico(
     ad_SRV_CODIGO	dm_codi,
@@ -292,7 +300,7 @@ End
 $$;
 
 -----------
---	Cria Procedure para alterar registro dos dados na tabela de Servico
+--	5.3 Cria Procedure para alterar registro dos dados na tabela de Servico
 -----------
 Create Or Replace Procedure alte_servico(
     alte_recno			dm_recn,
@@ -317,7 +325,7 @@ $$;
 
 
 -----------
---	Cria Procedure para "deletar" registro dos dados na tabela de Servico
+--	5.4 Cria Procedure para "deletar" registro dos dados na tabela de Servico
 -----------
 Create Or Replace Procedure dlt_servico(
     dlt_recno		dm_recn
@@ -339,12 +347,12 @@ $$;
 
 
 -------------------------------------------------------------------------------------
--- Passo 5:																			--
+-- Passo 6:																			--
 --	Criação da tabela de cadastro de Vendas e da trigger para vincular o recno	--
 -------------------------------------------------------------------------------------
 
 -----------
---	Cria Tabela Vendas
+--	6.1 Cria Tabela Vendas
 -----------
 Create Table VENDAS(
 	VND_CODIGO		dm_codi,
@@ -395,7 +403,7 @@ Execute Function set_recno_venda();
 
 
 -----------
---	Cria Procedure para inclusão de dados na tabela de Produto
+--	6.2 Cria Procedure para inclusão de dados na tabela de Produto
 -----------
 Create Or Replace Procedure add_venda(
 	ad_VND_CODIGO		dm_codi,
@@ -460,7 +468,7 @@ End;
 $$;
 
 -----------
---	Cria Procedure para alterar registro dos dados na tabela de Produto
+--	6.3 Cria Procedure para alterar registro dos dados na tabela de Produto
 -----------
 Create Or Replace Procedure alte_venda(
     alte_recno			dm_recn,
@@ -558,7 +566,7 @@ $$;
 
 
 -----------
---	Cria Procedure para "deletar" registro dos dados na tabela de Produto
+--	6.4 Cria Procedure para "deletar" registro dos dados na tabela de Produto
 -----------
 Create Or Replace Procedure dlt_venda(
     dlt_recno		dm_recn
