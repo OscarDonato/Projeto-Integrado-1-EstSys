@@ -5,6 +5,28 @@ function showTab(tabId) {
   document.getElementById(tabId).style.display = "flex";
 }
 
+// add product antiga:
+//
+// function addProduct() {
+//     const name = document.getElementById('productName').value;
+//     const priceInput = document.getElementById('productPrice').value;
+//     const priceFloat = parseFloat(priceInput);
+
+//     if (name && !isNaN(priceFloat)) {
+//         const priceFormatted = priceFloat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+//         const row = `<tr>
+//             <td>${name}</td>
+//             <td data-raw-price="${priceFloat}">${priceFormatted}</td>
+//             <td>
+//                 <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+//                 <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+//             </td>
+//         </tr>`;
+//         document.getElementById('product-list').innerHTML += row;
+//     }
+// }
+
 function addProduct(event) {
   event.preventDefault();  // <- ESSENCIAL para impedir o recarregamento
 
@@ -46,76 +68,78 @@ function addProduct(event) {
   }
 }
 
-function addService(event) {
-    event.preventDefault();
-    const form = event.target;
-    const name = form.serviceName.value;
-    const priceInput = form.servicePrice.value;
-    const priceFloat = parseFloat(priceInput);
-
-    if (name && !isNaN(priceFloat)) {
-      const formData = new FormData(form);
-  
-      fetch('/cad_serv', {  // manda o formulário para o flask
-        method: 'POST',
-        body: formData
-      })
-  
-      //recebe de volta do flask
-      .then(res => res.ok ? res.text() : res.text().then(t => { throw new Error(t); })) 
-      .then(() => {
-        const priceFormatted = priceFloat.toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-        });
-  
-        const row = `<tr>
-          <td>${name}</td>
-          <td>${priceFormatted}</td>
-          <td>
-            <button onclick="editRow(this)">✏️</button>
-            <button onclick="deleteRow(this)">🗑️</button>
-          </td>
-        </tr>`;
-        document.getElementById('service-list').innerHTML += row;
-  
-        form.reset(); // limpa os campos
-      })
-      .catch(err => alert("Erro: " + err.message));
-    }
-
+function addService() {
+  const name = document.getElementById("serviceName").value;
+  const price = parseFloat(
+    document.getElementById("servicePrice").value
+  ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  if (name && price) {
+    const row = `<tr><td>${name}</td><td>${price}</td>
+        <td>
+            <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+            <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+        </td></tr>`;
+    document.getElementById("service-list").innerHTML += row;
+  }
 }
 
-function addClient() {
-  const name = document.getElementById("clientName").value;
-  let cpf = document.getElementById("clientCPF").value.replace(/\D/g, ""); // Removendo todos os caracteres que não são números
-  let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
 
-  // Validação do CPF (Deve conter exatamente 11 digitos)
-  if (cpf.length !== 11) {
-      alert("ERRO!\n(CPF deve conter 11 números E seguir formato XXX.XXX.XXX-XX)");
-      return;
+//Função antiga addClient
+// function addClient() {
+//   const name = document.getElementById("clientName").value;
+//   let cpf = document.getElementById("clientCPF").value.replace(/\D/g, "");
+//   cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+//   let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
+//   phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+//   if (name && cpf && phone) {
+//     const row = `<tr><td>${name}</td><td>${cpf}</td><td>${phone}</td>
+//         <td>
+//             <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+//             <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+//         </td></tr>`;
+//     document.getElementById("client-list").innerHTML += row;
+//   }
+// }
+
+function addClient() {
+  const name = document.getElementById('clientName').value;
+  let cpf = document.getElementById('clientCPF').value.replace(/\D/g, '');
+  let phone = document.getElementById('clientPhone').value.replace(/\D/g, '');
+  let cep = document.getElementById('clientCEP').value.replace(/\D/g, '');
+  const address = document.getElementById('clientAddress').value;
+  const complement = document.getElementById('clientComplement').value;
+  const note = document.getElementById('clientNote').value;
+
+  // Verificação de campos obrigatórios CEP e Endereço
+  if (!cep || !address) {
+    alert("Por favor, preencha os campos obrigatórios: CEP e Endereço.");
+    return;
   }
   
-  // Validação do número (Deve conter 11 digitos, incluindo o código de área)
-  if (phone.length !== 11) {
-      alert("ERRO!\n(Número de telefone deve conter 11 números E seguir formato (XX) XXXXX-XXXX)");
+  if (cpf.length !== 11 || phone.length !== 11 || cep.length !== 8) {
+      alert("Entrada de dados não confere com a formatação!");
       return;
   }
 
-  // Formatando o CPF para: XXX.XXX.XXX-XX
-  cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  cep = cep.replace(/(\d{5})(\d{3})/, '$1-$2');
 
-  // Formatando o Telefone para (XX) XXXXX-XXXX
-  phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-
-  if (name && cpf && phone) {
-      const row = `<tr><td>${name}</td><td>${cpf}</td><td>${phone}</td>
+  if (name && cpf && phone && cep && address && complement) {
+      const row = `<tr>
+          <td>${name}</td>
+          <td>${cpf}</td>
+          <td>${phone}</td>
+          <td>${cep}</td>
+          <td>${address}</td>
+          <td>${complement}</td>
+          <td>${note}</td>
           <td>
               <button class='edit-btn' onclick='editRow(this)'>✏️</button>
               <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
-          </td></tr>`;
-      document.getElementById("client-list").innerHTML += row;
+          </td>
+      </tr>`;
+      document.getElementById('client-list').innerHTML += row;
   }
 }
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -61,7 +61,11 @@
             placeholder="Celular (xx) xxxxx-xxxx"
             maxlength="15"
           />
-
+          <input type="text" id="clientCEP" placeholder="CEP (xxxxx-xxx)" maxlength="9">
+          <input type="text" id="clientAddress" placeholder="Endereço">
+          <input type="text" id="clientComplement" placeholder="Complemento">
+          <input type="text" id="clientNote" placeholder="Observações (opcional)">
+          
           <button onclick="addClient()" class="addItem">
             Adicione um cliente
           </button>
@@ -70,6 +74,10 @@
               <th>Nome</th>
               <th>CPF</th>
               <th>Telefone</th>
+              <th>CEP</th>
+              <th>Endereço</th>
+              <th>Complemento</th>
+              <th>Observações</th>
             </tr>
             <tbody id="client-list"></tbody>
           </table>
@@ -79,11 +87,17 @@
       <div class="cad">
         <section id="services">
           <h2>SERVIÇOS</h2>
-          <form id="serviceForm" onsubmit="addService(event)" class="formul">
-            <input type="text" id="serviceName" name="serviceName" placeholder="Nome do serviço" />
-            <input type="number" id="servicePrice" name="servicePrice" placeholder="Preço" step="0.01" />
-            <button type="submit" class="addItem">Adicione um serviço</button>
-          </form>
+          <input type="text" id="serviceName" placeholder="Nome do serviço" />
+          <input
+            type="number"
+            id="servicePrice"
+            placeholder="Preço"
+            step="0.01"
+          />
+
+          <button onclick="addService()" class="addItem">
+            Adicione um serviço
+          </button>
           <table class="display_table">
             <tr>
               <th class="item">Nome</th>
