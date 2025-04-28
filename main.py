@@ -4,7 +4,7 @@ import psycopg2
 from psycopg2 import sql
 
 
-#produtos = []
+produtos = [{'desc':"banana",'preco': 12.8, 'tipo':'fruta'},{'desc':"repolho",'preco': 12.8, 'tipo':'fruta'}]
 #services = []
 
 app = Flask(__name__)
@@ -68,7 +68,7 @@ def add_cliente():
     return jsonify(response)
 
 
-# Rota para alterar um cadastro de um produto
+# Rota para alterar um cadastro de um cliente
 @app.route('/alte_cliente', methods=['POST'])
 def alte_cliente():
     data = request.form

@@ -14,12 +14,13 @@ body {
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
+  text-align: center;
 }
 
 header {
   display: flex;
-  justify-content: center;
-  padding: 20px;
+  padding: 20px 20px 50px;
+  align-items: baseline;
 }
 
 .logo {
@@ -34,6 +35,11 @@ header {
   flex-direction: column;
   padding: 10px 10px 10px;
   margin: 15px 15px 15px;
+}
+
+.display_logo a {
+  color: #64004b;
+  text-decoration: none;
 }
 
 .display_logo:hover {
