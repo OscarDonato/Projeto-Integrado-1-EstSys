@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Vendas - Estetsys</title>
+  <link rel="stylesheet" href="../static/styles.css" />
+  <script src="../static/vendas.js"></script>
+</head>
+
+<body>
+  <header>
+    <div class="display_logo">
+      <a href="/">
+        <img src="../static/logo.png" alt="Logo" class="logo" />
+        <h1>Estetsys</h1>
+      </a>
+    </div>
+  </header>
+
+  <main class="interface">
+    <section class="cad">
+
+      <div class="formul">
+        <input type="text" id="productName" placeholder="Nome do Produto">
+        <input type="number" id="productPrice" placeholder="Preço Unitário (R$)" step="0.01">
+        <input type="number" id="productQuantity" placeholder="Quantidade" min="1">
+
+        <button class="searchClient" >Pesquisar Cliente</button>
+        <button class="searchProduct" >Pesquisar Produto</button>
+      </div>
+
+      <table class="display_table" id="cartTable">
+        <thead>
+          <tr>
+            <th>Produto</th>
+            <th>Preço Unitário</th>
+            <th>Quantidade</th>
+            <th>Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="cartBody">
+        </tbody>
+      </table>
+
+      <h3 id="totalAmount">Total: R$ 0.00</h3>
+
+      <button class="addItem" onclick="finalizeSale()">Finalizar Venda</button>
+    </section>
+  </main>
+
+</body>
+</html>
+

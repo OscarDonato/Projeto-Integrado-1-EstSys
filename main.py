@@ -10,13 +10,19 @@ produtos = [{'desc':"banana",'preco': 12.8, 'tipo':'fruta'},{'desc':"repolho",'p
 app = Flask(__name__)
 CORS(app)  # permite que o frontend chame o backend, especialmente útil localmente
 
+# Rotas das páginas
+
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/cadastros')
-def mensagem():
+def dir_cadastros():
     return render_template('cadastros.html')
+
+@app.route('/vendas')
+def dir_vendas():
+    return render_template('vendas.html')
 
 
 ##################################################################################################################################################
@@ -334,7 +340,7 @@ def cad_serv():
     except ValueError:
         return "Preço inválido", 400
 
-    services.append([nome, preco])
+    # services.append([nome, preco])
     return "Serviço adicionado com sucesso"
 
 if __name__ == '__main__':
