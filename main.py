@@ -410,9 +410,9 @@ def proc_produto():
 def proc_service():
 
     data = request.form
-    SRV_CODIGO   = data.get('productID', '').strip()
-    SRV_NOME     = data.get('productName', '').strip()
-    SRV_OBSERVA      = data.get('productDesc', '').strip()
+    SRV_CODIGO   = data.get('srvID', '').strip()
+    SRV_NOME     = data.get('srvName', '').strip()
+    SRV_OBSERVA      = data.get('srvDesc', '').strip()
     
     # FORMATA PARA BUSCA PARCIAL
     src_cod = f"%{SRV_CODIGO}%"

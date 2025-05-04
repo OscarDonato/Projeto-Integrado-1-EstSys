@@ -28,7 +28,7 @@
 
       <div class="cad">
         <section id="products">
-          <h2>PRODUTOS</h2>
+          <h2>PRODUTOS<br /></h2>
 
           <form id="productForm" onsubmit="addProduct(event)" class="formul">
             <input type="text" name="productID" placeholder="ID do produto" />
@@ -59,38 +59,45 @@
 
       <div class="cad">
         <section id="clients">
-          <h2>CLIENTES</h2>
-          <input type="text" id="clientName" placeholder="Nome do Cliente" />
-          <input
-            type="text"
-            id="clientCPF"
-            placeholder="CPF (xxx.xxx.xxx-xx)"
-            maxlength="14"
-          />
+          <h2>CLIENTES<br /></h2>
+          <form id="customerForm" onsubmit="addClient(event)" class="formul">
+            <input type="text" id="clientName" placeholder="Nome do Cliente" />
+            <input
+              type="text"
+              id="clientCPF"
+              placeholder="CPF (xxx.xxx.xxx-xx)"
+              maxlength="14"
+            />
 
-          <input
-            type="text"
-            id="clientPhone"
-            placeholder="Celular (xx) xxxxx-xxxx"
-            maxlength="15"
-          />
-          <input
-            type="text"
-            id="clientCEP"
-            placeholder="CEP (xxxxx-xxx)"
-            maxlength="9"
-          />
-          <input type="text" id="clientAddress" placeholder="Endereço" />
-          <input type="text" id="clientComplement" placeholder="Complemento" />
-          <input
-            type="text"
-            id="clientNote"
-            placeholder="Observações (opcional)"
-          />
+            <input
+              type="text"
+              id="clientPhone"
+              placeholder="Celular (xx) xxxxx-xxxx"
+              maxlength="15"
+            />
+            <input
+              type="text"
+              id="clientCEP"
+              placeholder="CEP (xxxxx-xxx)"
+              maxlength="9"
+            />
+            <input type="text" id="clientAddress" placeholder="Endereço" />
+            <input
+              type="text"
+              id="clientComplement"
+              placeholder="Complemento"
+            />
+            <input
+              type="text"
+              id="clientNote"
+              placeholder="Observações (opcional)"
+            />
 
-          <button onclick="addClient()" class="addItem">
-            Adicione um cliente
-          </button>
+            <button onclick="addClient()" class="addItem">
+              Adicione um cliente
+            </button>
+          </form>
+
           <table class="display_table">
             <tr>
               <th>Nome</th>
@@ -109,17 +116,26 @@
       <div class="cad">
         <section id="services">
           <h2>SERVIÇOS</h2>
-          <input type="text" id="serviceName" placeholder="Nome do serviço" />
-          <input
-            type="number"
-            id="servicePrice"
-            placeholder="Preço"
-            step="0.01"
-          />
+          <form id="servicesForm" onsubmit="addService(event)" class="formul">
+            <input type="text" id="srvID" placeholder="ID do serviço" />
+            <input type="text" id="srvName" placeholder="Nome do serviço" />
+            <input
+              type="text"
+              id="srvDesc"
+              placeholder="Descrição do serviço"
+            />
+            <input
+              type="number"
+              id="srvPrice"
+              placeholder="Preço"
+              step="0.01"
+            />
 
-          <button onclick="addService()" class="addItem">
-            Adicione um serviço
-          </button>
+            <button onclick="addService()" class="addItem">
+              Adicione um serviço
+            </button>
+          </form>
+
           <table class="display_table">
             <tr>
               <th class="item">Nome</th>

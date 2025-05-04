@@ -2,7 +2,7 @@ function showTab(tabId) {
   document.getElementById("products").style.display = "none";
   document.getElementById("clients").style.display = "none";
   document.getElementById("services").style.display = "none";
-  document.getElementById(tabId).style.display = "flex";
+  document.getElementById(tabId).style.display = "inherit";
 }
 
 // add product antiga:
@@ -28,7 +28,7 @@ function showTab(tabId) {
 // }
 
 function addProduct(event) {
-  event.preventDefault();  // <- ESSENCIAL para impedir o recarregamento
+  event.preventDefault(); // <- ESSENCIAL para impedir o recarregamento
 
   //recebe o formulário como um elemento só a partir de "event"
   const form = event.target;
@@ -39,20 +39,26 @@ function addProduct(event) {
   if (name && !isNaN(priceFloat)) {
     const formData = new FormData(form);
 
-    fetch('/cad_prod', {  // manda o formulário para o flask
-      method: 'POST',
-      body: formData
+    fetch("/cad_prod", {
+      // manda o formulário para o flask
+      method: "POST",
+      body: formData,
     })
+      //recebe de volta do flask
+      .then((res) =>
+        res.ok
+          ? res.text()
+          : res.text().then((t) => {
+              throw new Error(t);
+            })
+      )
+      .then(() => {
+        const priceFormatted = priceFloat.toLocaleString("pt-BR", {
+          style: "currency",
+          currency: "BRL",
+        });
 
-    //recebe de volta do flask
-    .then(res => res.ok ? res.text() : res.text().then(t => { throw new Error(t); })) 
-    .then(() => {
-      const priceFormatted = priceFloat.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-      });
-
-      const row = `<tr>
+        const row = `<tr>
         <td>${name}</td>
         <td>${priceFormatted}</td>
         <td>
@@ -60,11 +66,11 @@ function addProduct(event) {
           <button onclick="deleteRow(this)">🗑️</button>
         </td>
       </tr>`;
-      document.getElementById('product-list').innerHTML += row;
+        document.getElementById("product-list").innerHTML += row;
 
-      form.reset(); // limpa os campos
-    })
-    .catch(err => alert("Erro: " + err.message));
+        form.reset(); // limpa os campos
+      })
+      .catch((err) => alert("Erro: " + err.message));
   }
 }
 
@@ -82,7 +88,6 @@ function addService() {
     document.getElementById("service-list").innerHTML += row;
   }
 }
-
 
 //Função antiga addClient
 // function addClient() {
@@ -102,31 +107,31 @@ function addService() {
 // }
 
 function addClient() {
-  const name = document.getElementById('clientName').value;
-  let cpf = document.getElementById('clientCPF').value.replace(/\D/g, '');
-  let phone = document.getElementById('clientPhone').value.replace(/\D/g, '');
-  let cep = document.getElementById('clientCEP').value.replace(/\D/g, '');
-  const address = document.getElementById('clientAddress').value;
-  const complement = document.getElementById('clientComplement').value;
-  const note = document.getElementById('clientNote').value;
+  const name = document.getElementById("clientName").value;
+  let cpf = document.getElementById("clientCPF").value.replace(/\D/g, "");
+  let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
+  let cep = document.getElementById("clientCEP").value.replace(/\D/g, "");
+  const address = document.getElementById("clientAddress").value;
+  const complement = document.getElementById("clientComplement").value;
+  const note = document.getElementById("clientNote").value;
 
   // Verificação de campos obrigatórios CEP e Endereço
   if (!cep || !address) {
     alert("Por favor, preencha os campos obrigatórios: CEP e Endereço.");
     return;
   }
-  
+
   if (cpf.length !== 11 || phone.length !== 11 || cep.length !== 8) {
-      alert("Entrada de dados não confere com a formatação!");
-      return;
+    alert("Entrada de dados não confere com a formatação!");
+    return;
   }
 
-  cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-  phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
-  cep = cep.replace(/(\d{5})(\d{3})/, '$1-$2');
+  cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+  cep = cep.replace(/(\d{5})(\d{3})/, "$1-$2");
 
   if (name && cpf && phone && cep && address && complement) {
-      const row = `<tr>
+    const row = `<tr>
           <td>${name}</td>
           <td>${cpf}</td>
           <td>${phone}</td>
@@ -139,7 +144,7 @@ function addClient() {
               <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
           </td>
       </tr>`;
-      document.getElementById('client-list').innerHTML += row;
+    document.getElementById("client-list").innerHTML += row;
   }
 }
 
