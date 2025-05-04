@@ -354,6 +354,7 @@ def proc_cliente():
     CLI_NOME     = data.get('clientName', '').strip()
     CLI_TEL      = data.get('clientPhone', '').strip()
     
+    # FORMATA PARA BUSCA PARCIAL
     src_cod = f"%{CLI_CODIGO}%"
     src_nome = f"%{CLI_NOME}%"
     src_tel = f"%{CLI_TEL}%"
@@ -372,22 +373,18 @@ def proc_cliente():
     cur.close()
     conn.close()
 
-    jsonify(rows)
+    return jsonify(rows)
 
 
-@app.route('/proc_cliente', methods=["GET"])
+@app.route('/proc_prd', methods=["GET"])
 def proc_produto():
 
-    # data = request.form
-    # ad_PRD_CODIGO  = data.get('productName', '').strip()
-    # ad_PRD_NOME    = data.get('productName', '').strip()
-    # ad_PRD_PRECO   = float( data.get('productPrice', '').strip() )
-    # ad_PRD_OBSERVA = data.get('productName', '').strip()
     data = request.form
     PRD_CODIGO   = data.get('productID', '').strip()
     PRD_NOME     = data.get('productName', '').strip()
     PRD_OBSERVA      = data.get('productDesc', '').strip()
     
+    # FORMATA PARA BUSCA PARCIAL
     src_cod = f"%{PRD_CODIGO}%"
     src_nome = f"%{PRD_NOME}%"
     src_obs = f"%{PRD_OBSERVA}%"
@@ -395,19 +392,49 @@ def proc_produto():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cliente_query = """
+    produto_query = """
         SELECT * FROM PRODUTO 
         WHERE PRD_CODIGO LIKE %s OR PRD_NOME LIKE %s OR PRD_OBSERVA LIKE %s;
     """
 
-    cur.execute(cliente_query, (src_cod, src_nome, src_obs))
+    cur.execute(produto_query, (src_cod, src_nome, src_obs))
     rows = cur.fetchall()
 
     cur.close()
     conn.close()
 
-    jsonify(rows)
+    return jsonify(rows)
  
+
+@app.route('/proc_srv', methods=["GET"])
+def proc_service():
+
+    data = request.form
+    SRV_CODIGO   = data.get('productID', '').strip()
+    SRV_NOME     = data.get('productName', '').strip()
+    SRV_OBSERVA      = data.get('productDesc', '').strip()
+    
+    # FORMATA PARA BUSCA PARCIAL
+    src_cod = f"%{SRV_CODIGO}%"
+    src_nome = f"%{SRV_NOME}%"
+    src_obs = f"%{SRV_OBSERVA}%"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    servico_query = """
+        SELECT * FROM SERVICO 
+        WHERE SRV_CODIGO LIKE %s OR SRV_NOME LIKE %s OR SRV_OBSERVA LIKE %s;
+    """
+
+    cur.execute(servico_query, (src_cod, src_nome, src_obs))
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return jsonify(rows)
+
 
 
 if __name__ == '__main__':

@@ -30,13 +30,22 @@
         <section id="products">
           <h2>PRODUTOS</h2>
 
-            <form id="productForm" onsubmit="addProduct(event)" class="formul">
-              <input type="text" name="productID" placeholder="ID do produto"/>
-              <input type="text" name="productName" placeholder="Nome do Produto" />
-              <input type="text" name="productDesc" placeholder="Descrição"/>
-              <input type="number" name="productPrice" placeholder="Preço" step="0.01"/>
-              <button type="submit" class="addItem">Adicione um produto</button>
-            </form>
+          <form id="productForm" onsubmit="addProduct(event)" class="formul">
+            <input type="text" name="productID" placeholder="ID do produto" />
+            <input
+              type="text"
+              name="productName"
+              placeholder="Nome do Produto"
+            />
+            <input type="text" name="productDesc" placeholder="Descrição" />
+            <input
+              type="number"
+              name="productPrice"
+              placeholder="Preço"
+              step="0.01"
+            />
+            <button type="submit" class="addItem">Adicione um produto</button>
+          </form>
 
           <table class="display_table">
             <tr>
@@ -65,11 +74,20 @@
             placeholder="Celular (xx) xxxxx-xxxx"
             maxlength="15"
           />
-          <input type="text" id="clientCEP" placeholder="CEP (xxxxx-xxx)" maxlength="9">
-          <input type="text" id="clientAddress" placeholder="Endereço">
-          <input type="text" id="clientComplement" placeholder="Complemento">
-          <input type="text" id="clientNote" placeholder="Observações (opcional)">
-          
+          <input
+            type="text"
+            id="clientCEP"
+            placeholder="CEP (xxxxx-xxx)"
+            maxlength="9"
+          />
+          <input type="text" id="clientAddress" placeholder="Endereço" />
+          <input type="text" id="clientComplement" placeholder="Complemento" />
+          <input
+            type="text"
+            id="clientNote"
+            placeholder="Observações (opcional)"
+          />
+
           <button onclick="addClient()" class="addItem">
             Adicione um cliente
           </button>
