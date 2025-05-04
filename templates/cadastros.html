@@ -31,7 +31,9 @@
           <h2>PRODUTOS</h2>
 
             <form id="productForm" onsubmit="addProduct(event)" class="formul">
+              <input type="text" name="productID" placeholder="ID do produto"/>
               <input type="text" name="productName" placeholder="Nome do Produto" />
+              <input type="text" name="productDesc" placeholder="Descrição"/>
               <input type="number" name="productPrice" placeholder="Preço" step="0.01"/>
               <button type="submit" class="addItem">Adicione um produto</button>
             </form>

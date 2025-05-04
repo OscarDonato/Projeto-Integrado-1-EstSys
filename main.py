@@ -30,6 +30,7 @@ def dir_vendas():
 ##################################################################################################################################################
 ##################################################################################################################################################
 # Configurações do banco de dados
+
 DB_HOST = "localhost"
 DB_NAME = "estetsys"
 DB_USER = "estetsys"
@@ -342,6 +343,72 @@ def cad_serv():
 
     # services.append([nome, preco])
     return "Serviço adicionado com sucesso"
+
+#################################################################
+###################     Consulta de dados       #################
+
+@app.route('/proc_cliente', methods=["GET"])
+def proc_cliente():
+    data = request.form
+    CLI_CODIGO   = data.get('clientCPF', '').strip()
+    CLI_NOME     = data.get('clientName', '').strip()
+    CLI_TEL      = data.get('clientPhone', '').strip()
+    
+    src_cod = f"%{CLI_CODIGO}%"
+    src_nome = f"%{CLI_NOME}%"
+    src_tel = f"%{CLI_TEL}%"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cliente_query = """
+        SELECT * FROM CLIENTE 
+        WHERE CLI_CODIGO LIKE %s OR CLI_NOME LIKE %s OR CLI_TEL LIKE %s;
+    """
+
+    cur.execute(cliente_query, (src_cod, src_nome, src_tel))
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    jsonify(rows)
+
+
+@app.route('/proc_cliente', methods=["GET"])
+def proc_produto():
+
+    # data = request.form
+    # ad_PRD_CODIGO  = data.get('productName', '').strip()
+    # ad_PRD_NOME    = data.get('productName', '').strip()
+    # ad_PRD_PRECO   = float( data.get('productPrice', '').strip() )
+    # ad_PRD_OBSERVA = data.get('productName', '').strip()
+    data = request.form
+    PRD_CODIGO   = data.get('productID', '').strip()
+    PRD_NOME     = data.get('productName', '').strip()
+    PRD_OBSERVA      = data.get('productDesc', '').strip()
+    
+    src_cod = f"%{PRD_CODIGO}%"
+    src_nome = f"%{PRD_NOME}%"
+    src_obs = f"%{PRD_OBSERVA}%"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cliente_query = """
+        SELECT * FROM PRODUTO 
+        WHERE PRD_CODIGO LIKE %s OR PRD_NOME LIKE %s OR PRD_OBSERVA LIKE %s;
+    """
+
+    cur.execute(cliente_query, (src_cod, src_nome, src_obs))
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    jsonify(rows)
+ 
+
 
 if __name__ == '__main__':
     app.run(debug=True)
