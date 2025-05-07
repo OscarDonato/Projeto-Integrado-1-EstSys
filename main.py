@@ -40,14 +40,16 @@ def get_db_connection():
 @app.route('/add_cliente', methods=['POST'])
 def add_cliente():
     data = request.form
-    ad_CLI_CODIGO   = data.get('clientCPF', '').strip()
-    ad_CLI_NOME     = data.get('clientName', '').strip()
-    ad_CLI_ENDERECO	= data.get('clientAddress', '').strip() + data.get('clientComplement', '').strip() + data.get('clientCEP', '').strip()
-    ad_CLI_TEL      = data.get('clientPhone', '').strip()
-    ad_CLI_DOC      = data.get('clientCPF', '').strip()
-    ad_CLI_OBSERVA  = data.get('clientNote', '').strip()
+    ad_CLI_CODIGO     = data.get('clientCPF', '').strip()
+    ad_CLI_NOME       = data.get('clientName', '').strip()
+    ad_CLI_ENDERECO   = data.get('clientAddress', '').strip()
+    ad_CLI_COMPLEMENT = data.get('clientComplement', '').strip()
+    ad_CLI_CEP        = data.get('clientCEP', '').strip()
+    ad_CLI_TEL        = data.get('clientPhone', '').strip()
+    ad_CLI_DOC        = data.get('clientCPF', '').strip()
+    ad_CLI_OBSERVA    = data.get('clientNote', '').strip()
 
-    if not ad_CLI_CODIGO or not ad_CLI_NOME or not ad_CLI_ENDERECO or not ad_CLI_TEL or not ad_CLI_DOC:
+    if not ad_CLI_CODIGO or not ad_CLI_NOME or not ad_CLI_ENDERECO or not ad_CLI_COMPLEMENT or not ad_CLI_CEP or not ad_CLI_TEL or not ad_CLI_DOC:
         return "Dados incompletos", 400
     
     conn = get_db_connection()
@@ -55,7 +57,7 @@ def add_cliente():
     
     try:
         # Chamando a procedure de inclusão de dados na tabela de cadastro de produtos
-        cur.callproc( 'add_cliente', ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
+        cur.callproc( 'add_cliente', ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
         conn.commit()
         response = {"message": "Cliente adicionado com sucesso!"}
     except Exception as e:
@@ -72,12 +74,14 @@ def add_cliente():
 @app.route('/alte_cliente', methods=['POST'])
 def alte_cliente():
     data = request.form
-    alte_CLI_CODIGO   = data.get('clientCPF', '').strip()
-    alte_CLI_ENDERECO = data.get('clientAddress', '').strip() + data.get('clientComplement', '').strip() + data.get('clientCEP', '').strip()
-    alte_CLI_TEL      = data.get('clientPhone', '').strip()
-    alte_CLI_OBSERVA  = data.get('clientNote', '').strip()
+    alte_CLI_CODIGO     = data.get('clientCPF', '').strip()
+    alte_CLI_ENDERECO   = data.get('clientAddress', '').strip()
+    alte_CLI_COMPLEMENT = data.get('clientComplement', '').strip()
+    alte_CLI_CEP        = data.get('clientCEP', '').strip()
+    alte_CLI_TEL        = data.get('clientPhone', '').strip()
+    alte_CLI_OBSERVA    = data.get('clientNote', '').strip()
 
-    if not alte_CLI_CODIGO or ( not alte_CLI_ENDERECO and not alte_CLI_TEL ):
+    if not alte_CLI_CODIGO or ( not alte_CLI_ENDERECO and not alte_CLI_TEL  and not alte_CLI_COMPLEMENT  and not alte_CLI_CEP ):
         return "Dados incompletos", 400
     
     conn = get_db_connection()
@@ -85,7 +89,7 @@ def alte_cliente():
     
     try:
         # Chamando a procedure de alteração de dados na tabela de cadastro de produtos
-        cur.callproc( 'alte_cliente', (alte_CLI_CODIGO, alte_CLI_ENDERECO, alte_CLI_TEL, alte_CLI_OBSERVA ) )
+        cur.callproc( 'alte_cliente', (alte_CLI_CODIGO, alte_CLI_ENDERECO, alte_CLI_COMPLEMENT, alte_CLI_CEP, alte_CLI_TEL, alte_CLI_OBSERVA ) )
         conn.commit()
         response = {"message": "Cliente alterados com sucesso!"}
     except Exception as e:
