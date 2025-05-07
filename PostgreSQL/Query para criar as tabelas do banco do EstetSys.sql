@@ -28,6 +28,8 @@ Create Domain dm_nmet Varchar(150)					;
 Create Domain dm_ende Varchar(150)					;
 Create Domain dm_tele Varchar(20)					;
 Create Domain dm_docm Varchar(50)					;
+Create Domain dm_comp Varchar(50)					;
+Create Domain dm_cep  Varchar(50)					;
 Create Domain dm_codi Numeric(10) 		Not Null	;
 Create Domain dm_cdet Numeric(10) 					;
 Create Domain dm_prec Numeric(10, 2)	Default 0	;
@@ -50,6 +52,8 @@ Create Table CLIENTE(
 	CLI_CODIGO		dm_codi Unique,
 	CLI_NOME		dm_nome,
 	CLI_ENDERECO	dm_ende,
+	CLI_COMPLEMENT	dm_comp,
+	CLI_CEP			dm_cep ,
 	CLI_TEL			dm_tele,
 	CLI_DOC			dm_docm,
 	CLI_OBSERVA 	dm_obse,
@@ -80,17 +84,19 @@ Execute Function set_recno_client();
 --	3.3 Cria Procedure para inclusão de dados na tabela de clientes
 -----------
 Create Or Replace Procedure add_cliente(
-    ad_CLI_CODIGO	dm_codi,
-	ad_CLI_NOME		dm_nome,
-	ad_CLI_ENDERECO	dm_ende,
-	ad_CLI_TEL		dm_tele,
-	ad_CLI_DOC		dm_docm,
-	ad_CLI_OBSERVA 	dm_obse
+    ad_CLI_CODIGO		dm_codi,
+	ad_CLI_NOME			dm_nome,
+	ad_CLI_ENDERECO		dm_ende,
+	ad_CLI_COMPLEMENT	dm_comp,
+	ad_CLI_CEP			dm_cep ,
+	ad_CLI_TEL			dm_tele,
+	ad_CLI_DOC			dm_docm,
+	ad_CLI_OBSERVA 		dm_obse
 )
 Language plpgsql As $$
 Begin
-    Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_TEL, CLI_DOC, CLI_OBSERVA )
-    Values ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA );
+    Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_COMPLEMENT, CLI_CEP, CLI_TEL, CLI_DOC, CLI_OBSERVA )
+    Values ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA );
 End;
 $$;
 
@@ -100,6 +106,8 @@ $$;
 Create Or Replace Procedure alte_cliente(
 	alte_CLI_CODIGO		dm_codi,
 	alte_CLI_ENDERECO	dm_ende,
+	alte_CLI_COMPLEMENT	dm_comp,
+	alte_CLI_CEP		dm_cep ,
 	alte_CLI_TEL		dm_tele,
 	alte_CLI_OBSERVA 	dm_obse
 )
@@ -109,6 +117,16 @@ Begin
 	If IsNull( alte_CLI_ENDERECO, '' ) <> ''
 		Then
         Update CLIENTE Set CLI_ENDERECO = alte_CLI_ENDERECO Where CLI_CODIGO = alte_CLI_CODIGO;
+    End If;
+	
+	If IsNull( alte_CLI_COMPLEMENT, '' ) <> ''
+		Then
+        Update CLIENTE Set CLI_COMPLEMENT = alte_CLI_COMPLEMENT Where CLI_CODIGO = alte_CLI_CODIGO;
+    End If;
+	
+	If IsNull( alte_CLI_CEP, '' ) <> ''
+		Then
+        Update CLIENTE Set CLI_CEP = alte_CLI_CEP Where CLI_CODIGO = alte_CLI_CODIGO;
     End If;
 	
 	If IsNull( alte_CLI_TEL, '' ) <> ''
@@ -597,3 +615,6 @@ $$;
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
+
+
+
