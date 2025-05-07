@@ -4,19 +4,25 @@ import psycopg2
 from psycopg2 import sql
 
 
-#produtos = []
+produtos = [{'desc':"banana",'preco': 12.8, 'tipo':'fruta'},{'desc':"repolho",'preco': 12.8, 'tipo':'fruta'}]
 #services = []
 
 app = Flask(__name__)
 CORS(app)  # permite que o frontend chame o backend, especialmente útil localmente
+
+# Rotas das páginas
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
 @app.route('/cadastros')
-def mensagem():
+def dir_cadastros():
     return render_template('cadastros.html')
+
+@app.route('/vendas')
+def dir_vendas():
+    return render_template('vendas.html')
 
 
 ##################################################################################################################################################
@@ -24,6 +30,7 @@ def mensagem():
 ##################################################################################################################################################
 ##################################################################################################################################################
 # Configurações do banco de dados
+
 DB_HOST = "localhost"
 DB_NAME = "estetsys"
 DB_USER = "estetsys"
@@ -70,7 +77,7 @@ def add_cliente():
     return jsonify(response)
 
 
-# Rota para alterar um cadastro de um produto
+# Rota para alterar um cadastro de um cliente
 @app.route('/alte_cliente', methods=['POST'])
 def alte_cliente():
     data = request.form
@@ -338,8 +345,101 @@ def cad_serv():
     except ValueError:
         return "Preço inválido", 400
 
-    services.append([nome, preco])
+    # services.append([nome, preco])
     return "Serviço adicionado com sucesso"
+
+#################################################################
+###################     Consulta de dados       #################
+
+@app.route('/proc_cliente', methods=["GET"])
+def proc_cliente():
+    data = request.form
+    CLI_CODIGO   = data.get('clientCPF', '').strip()
+    CLI_NOME     = data.get('clientName', '').strip()
+    CLI_TEL      = data.get('clientPhone', '').strip()
+    
+    # FORMATA PARA BUSCA PARCIAL
+    src_cod = f"%{CLI_CODIGO}%"
+    src_nome = f"%{CLI_NOME}%"
+    src_tel = f"%{CLI_TEL}%"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cliente_query = """
+        SELECT * FROM CLIENTE 
+        WHERE CLI_CODIGO LIKE %s OR CLI_NOME LIKE %s OR CLI_TEL LIKE %s;
+    """
+
+    cur.execute(cliente_query, (src_cod, src_nome, src_tel))
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return jsonify(rows)
+
+
+@app.route('/proc_prd', methods=["GET"])
+def proc_produto():
+
+    data = request.form
+    PRD_CODIGO   = data.get('productID', '').strip()
+    PRD_NOME     = data.get('productName', '').strip()
+    PRD_OBSERVA      = data.get('productDesc', '').strip()
+    
+    # FORMATA PARA BUSCA PARCIAL
+    src_cod = f"%{PRD_CODIGO}%"
+    src_nome = f"%{PRD_NOME}%"
+    src_obs = f"%{PRD_OBSERVA}%"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    produto_query = """
+        SELECT * FROM PRODUTO 
+        WHERE PRD_CODIGO LIKE %s OR PRD_NOME LIKE %s OR PRD_OBSERVA LIKE %s;
+    """
+
+    cur.execute(produto_query, (src_cod, src_nome, src_obs))
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return jsonify(rows)
+ 
+
+@app.route('/proc_srv', methods=["GET"])
+def proc_service():
+
+    data = request.form
+    SRV_CODIGO   = data.get('srvID', '').strip()
+    SRV_NOME     = data.get('srvName', '').strip()
+    SRV_OBSERVA      = data.get('srvDesc', '').strip()
+    
+    # FORMATA PARA BUSCA PARCIAL
+    src_cod = f"%{SRV_CODIGO}%"
+    src_nome = f"%{SRV_NOME}%"
+    src_obs = f"%{SRV_OBSERVA}%"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    servico_query = """
+        SELECT * FROM SERVICO 
+        WHERE SRV_CODIGO LIKE %s OR SRV_NOME LIKE %s OR SRV_OBSERVA LIKE %s;
+    """
+
+    cur.execute(servico_query, (src_cod, src_nome, src_obs))
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return jsonify(rows)
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
