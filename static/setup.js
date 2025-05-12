@@ -1,187 +1,187 @@
-function showTab(tabId) {
-  document.getElementById("products").style.display = "none";
-  document.getElementById("clients").style.display = "none";
-  document.getElementById("services").style.display = "none";
-  document.getElementById(tabId).style.display = "inherit";
-}
-
-// add product antiga:
-//
-// function addProduct() {
-//     const name = document.getElementById('productName').value;
-//     const priceInput = document.getElementById('productPrice').value;
-//     const priceFloat = parseFloat(priceInput);
-
-//     if (name && !isNaN(priceFloat)) {
-//         const priceFormatted = priceFloat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-//         const row = `<tr>
-//             <td>${name}</td>
-//             <td data-raw-price="${priceFloat}">${priceFormatted}</td>
-//             <td>
-//                 <button class='edit-btn' onclick='editRow(this)'>✏️</button>
-//                 <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
-//             </td>
-//         </tr>`;
-//         document.getElementById('product-list').innerHTML += row;
-//     }
+// function showTab(tabId) {
+//   document.getElementById("products").style.display = "none";
+//   document.getElementById("clients").style.display = "none";
+//   document.getElementById("services").style.display = "none";
+//   document.getElementById(tabId).style.display = "inherit";
 // }
 
-function addProduct(event) {
-  event.preventDefault(); // <- ESSENCIAL para impedir o recarregamento
+// // add product antiga:
+// //
+// // function addProduct() {
+// //     const name = document.getElementById('productName').value;
+// //     const priceInput = document.getElementById('productPrice').value;
+// //     const priceFloat = parseFloat(priceInput);
 
-  //recebe o formulário como um elemento só a partir de "event"
-  const form = event.target;
-  const name = form.productName.value;
-  const priceInput = form.productPrice.value;
-  const priceFloat = parseFloat(priceInput);
+// //     if (name && !isNaN(priceFloat)) {
+// //         const priceFormatted = priceFloat.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
-  if (name && !isNaN(priceFloat)) {
-    const formData = new FormData(form);
+// //         const row = `<tr>
+// //             <td>${name}</td>
+// //             <td data-raw-price="${priceFloat}">${priceFormatted}</td>
+// //             <td>
+// //                 <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+// //                 <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+// //             </td>
+// //         </tr>`;
+// //         document.getElementById('product-list').innerHTML += row;
+// //     }
+// // }
 
-    fetch("/cad_prod", {
-      // manda o formulário para o flask
-      method: "POST",
-      body: formData,
-    })
-      //recebe de volta do flask
-      .then((res) =>
-        res.ok
-          ? res.text()
-          : res.text().then((t) => {
-              throw new Error(t);
-            })
-      )
-      .then(() => {
-        const priceFormatted = priceFloat.toLocaleString("pt-BR", {
-          style: "currency",
-          currency: "BRL",
-        });
+// function addProduct(event) {
+//   event.preventDefault(); // <- ESSENCIAL para impedir o recarregamento
 
-        const row = `<tr>
-        <td>${name}</td>
-        <td>${priceFormatted}</td>
-        <td>
-          <button onclick="editRow(this)">✏️</button>
-          <button onclick="deleteRow(this)">🗑️</button>
-        </td>
-      </tr>`;
-        document.getElementById("product-list").innerHTML += row;
+//   //recebe o formulário como um elemento só a partir de "event"
+//   const form = event.target;
+//   const name = form.productName.value;
+//   const priceInput = form.productPrice.value;
+//   const priceFloat = parseFloat(priceInput);
 
-        form.reset(); // limpa os campos
-      })
-      .catch((err) => alert("Erro: " + err.message));
-  }
-}
+//   if (name && !isNaN(priceFloat)) {
+//     const formData = new FormData(form);
 
-function addService() {
-  const name = document.getElementById("serviceName").value;
-  const price = parseFloat(
-    document.getElementById("servicePrice").value
-  ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  if (name && price) {
-    const row = `<tr><td>${name}</td><td>${price}</td>
-        <td>
-            <button class='edit-btn' onclick='editRow(this)'>✏️</button>
-            <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
-        </td></tr>`;
-    document.getElementById("service-list").innerHTML += row;
-  }
-}
+//     fetch("/cad_prod", {
+//       // manda o formulário para o flask
+//       method: "POST",
+//       body: formData,
+//     })
+//       //recebe de volta do flask
+//       .then((res) =>
+//         res.ok
+//           ? res.text()
+//           : res.text().then((t) => {
+//               throw new Error(t);
+//             })
+//       )
+//       .then(() => {
+//         const priceFormatted = priceFloat.toLocaleString("pt-BR", {
+//           style: "currency",
+//           currency: "BRL",
+//         });
 
-//Função antiga addClient
-// function addClient() {
-//   const name = document.getElementById("clientName").value;
-//   let cpf = document.getElementById("clientCPF").value.replace(/\D/g, "");
-//   cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-//   let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
-//   phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-//   if (name && cpf && phone) {
-//     const row = `<tr><td>${name}</td><td>${cpf}</td><td>${phone}</td>
+//         const row = `<tr>
+//         <td>${name}</td>
+//         <td>${priceFormatted}</td>
+//         <td>
+//           <button onclick="editRow(this)">✏️</button>
+//           <button onclick="deleteRow(this)">🗑️</button>
+//         </td>
+//       </tr>`;
+//         document.getElementById("product-list").innerHTML += row;
+
+//         form.reset(); // limpa os campos
+//       })
+//       .catch((err) => alert("Erro: " + err.message));
+//   }
+// }
+
+// function addService() {
+//   const name = document.getElementById("serviceName").value;
+//   const price = parseFloat(
+//     document.getElementById("servicePrice").value
+//   ).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+//   if (name && price) {
+//     const row = `<tr><td>${name}</td><td>${price}</td>
 //         <td>
 //             <button class='edit-btn' onclick='editRow(this)'>✏️</button>
 //             <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
 //         </td></tr>`;
-//     document.getElementById("client-list").innerHTML += row;
+//     document.getElementById("service-list").innerHTML += row;
 //   }
 // }
 
-function addClient() {
-  const name = document.getElementById("clientName").value;
-  let cpf = document.getElementById("clientCPF").value.replace(/\D/g, "");
-  let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
-  let cep = document.getElementById("clientCEP").value.replace(/\D/g, "");
-  const address = document.getElementById("clientAddress").value;
-  const complement = document.getElementById("clientComplement").value;
-  const note = document.getElementById("clientNote").value;
+// //Função antiga addClient
+// // function addClient() {
+// //   const name = document.getElementById("clientName").value;
+// //   let cpf = document.getElementById("clientCPF").value.replace(/\D/g, "");
+// //   cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+// //   let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
+// //   phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+// //   if (name && cpf && phone) {
+// //     const row = `<tr><td>${name}</td><td>${cpf}</td><td>${phone}</td>
+// //         <td>
+// //             <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+// //             <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+// //         </td></tr>`;
+// //     document.getElementById("client-list").innerHTML += row;
+// //   }
+// // }
 
-  // Verificação de campos obrigatórios CEP e Endereço
-  if (!cep || !address) {
-    alert("Por favor, preencha os campos obrigatórios: CEP e Endereço.");
-    return;
-  }
+// // function addClient() {
+// //   const name = document.getElementById("clientName").value;
+// //   let cpf = document.getElementById("clientCPF").value.replace(/\D/g, "");
+// //   let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
+// //   let cep = document.getElementById("clientCEP").value.replace(/\D/g, "");
+// //   const address = document.getElementById("clientAddress").value;
+// //   const complement = document.getElementById("clientComplement").value;
+// //   const note = document.getElementById("clientNote").value;
 
-  if (cpf.length !== 11 || phone.length !== 11 || cep.length !== 8) {
-    alert("Entrada de dados não confere com a formatação!");
-    return;
-  }
+// //   // Verificação de campos obrigatórios CEP e Endereço
+// //   if (!cep || !address) {
+// //     alert("Por favor, preencha os campos obrigatórios: CEP e Endereço.");
+// //     return;
+// //   }
 
-  cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
-  phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-  cep = cep.replace(/(\d{5})(\d{3})/, "$1-$2");
+// //   if (cpf.length !== 11 || phone.length !== 11 || cep.length !== 8) {
+// //     alert("Entrada de dados não confere com a formatação!");
+// //     return;
+// //   }
 
-  if (name && cpf && phone && cep && address && complement) {
-    const row = `<tr>
-          <td>${name}</td>
-          <td>${cpf}</td>
-          <td>${phone}</td>
-          <td>${cep}</td>
-          <td>${address}</td>
-          <td>${complement}</td>
-          <td>${note}</td>
-          <td>
-              <button class='edit-btn' onclick='editRow(this)'>✏️</button>
-              <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
-          </td>
-      </tr>`;
-    document.getElementById("client-list").innerHTML += row;
-  }
-}
+// //   cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+// //   phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
+// //   cep = cep.replace(/(\d{5})(\d{3})/, "$1-$2");
 
-//FUNÇÕES DE EDIÇÃO E EXCLUSÃO
+// //   if (name && cpf && phone && cep && address && complement) {
+// //     const row = `<tr>
+// //           <td>${name}</td>
+// //           <td>${cpf}</td>
+// //           <td>${phone}</td>
+// //           <td>${cep}</td>
+// //           <td>${address}</td>
+// //           <td>${complement}</td>
+// //           <td>${note}</td>
+// //           <td>
+// //               <button class='edit-btn' onclick='editRow(this)'>✏️</button>
+// //               <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
+// //           </td>
+// //       </tr>`;
+// //     document.getElementById("client-list").innerHTML += row;
+// //   }
+// // }
 
-function editRow(button) {
-  const row = button.parentElement.parentElement;
-  const cells = row.querySelectorAll("td:not(:last-child)"); // Excluí o conteúdo anterior
+// //FUNÇÕES DE EDIÇÃO E EXCLUSÃO
 
-  cells.forEach((cell) => {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = cell.innerText;
-    cell.innerHTML = "";
-    cell.appendChild(input);
-  });
+// function editRow(button) {
+//   const row = button.parentElement.parentElement;
+//   const cells = row.querySelectorAll("td:not(:last-child)"); // Excluí o conteúdo anterior
 
-  button.innerText = "✅"; // Troca o botão para salvar
-  button.onclick = function () {
-    saveRow(this);
-  };
-}
+//   cells.forEach((cell) => {
+//     const input = document.createElement("input");
+//     input.type = "text";
+//     input.value = cell.innerText;
+//     cell.innerHTML = "";
+//     cell.appendChild(input);
+//   });
 
-function saveRow(button) {
-  const row = button.parentElement.parentElement;
-  const inputs = row.querySelectorAll("input");
+//   button.innerText = "✅"; // Troca o botão para salvar
+//   button.onclick = function () {
+//     saveRow(this);
+//   };
+// }
 
-  inputs.forEach((input) => {
-    input.parentElement.innerText = input.value; // Substitui o imput por texto
-  });
+// function saveRow(button) {
+//   const row = button.parentElement.parentElement;
+//   const inputs = row.querySelectorAll("input");
 
-  button.innerText = "✏️"; // Faz o botão voltar a ser o lápis de edição
-  button.onclick = function () {
-    editRow(this);
-  };
-}
+//   inputs.forEach((input) => {
+//     input.parentElement.innerText = input.value; // Substitui o imput por texto
+//   });
 
-function deleteRow(button) {
-  button.parentElement.parentElement.remove();
-}
+//   button.innerText = "✏️"; // Faz o botão voltar a ser o lápis de edição
+//   button.onclick = function () {
+//     editRow(this);
+//   };
+// }
+
+// function deleteRow(button) {
+//   button.parentElement.parentElement.remove();
+// }

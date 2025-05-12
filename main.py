@@ -1,11 +1,8 @@
-from flask import Flask, request, redirect, url_for, jsonify, render_template
+from flask import Flask, flash, request, redirect, url_for, jsonify, render_template
 from flask_cors import CORS
 import psycopg2
 from psycopg2 import sql
 
-
-produtos = [{'desc':"banana",'preco': 12.8, 'tipo':'fruta'},{'desc':"repolho",'preco': 12.8, 'tipo':'fruta'}]
-#services = []
 
 app = Flask(__name__)
 CORS(app)  # permite que o frontend chame o backend, especialmente útil localmente
@@ -16,9 +13,17 @@ CORS(app)  # permite que o frontend chame o backend, especialmente útil localme
 def index():
     return render_template('index.html')
 
-@app.route('/cadastros')
-def dir_cadastros():
-    return render_template('cadastros.html')
+@app.route('/cadastro_clientes')
+def dir_cadastro_clientes():
+    return render_template('cadastro_clientes.html')
+
+@app.route('/cadastro_produtos')
+def dir_cadastro_produtos():
+    return render_template('cadastro_produtos.html')
+
+@app.route('/cadastro_servicos')
+def dir_cadastro_servicos():
+    return render_template('cadastro_servicos.html')
 
 @app.route('/vendas')
 def dir_vendas():
@@ -47,24 +52,28 @@ def get_db_connection():
 @app.route('/add_cliente', methods=['POST'])
 def add_cliente():
     data = request.form
-    ad_CLI_CODIGO     = data.get('clientCPF', '').strip()
+    # ad_CLI_CODIGO     = data.get('clientCPF', '').strip()
     ad_CLI_NOME       = data.get('clientName', '').strip()
-    ad_CLI_ENDERECO   = data.get('clientAddress', '').strip()
+    ad_CLI_ENDERECO	  = data.get('clientAddress', '').strip()
     ad_CLI_COMPLEMENT = data.get('clientComplement', '').strip()
     ad_CLI_CEP        = data.get('clientCEP', '').strip()
     ad_CLI_TEL        = data.get('clientPhone', '').strip()
     ad_CLI_DOC        = data.get('clientCPF', '').strip()
     ad_CLI_OBSERVA    = data.get('clientNote', '').strip()
 
-    if not ad_CLI_CODIGO or not ad_CLI_NOME or not ad_CLI_ENDERECO or not ad_CLI_COMPLEMENT or not ad_CLI_CEP or not ad_CLI_TEL or not ad_CLI_DOC:
-        return "Dados incompletos", 400
+    if not ad_CLI_NOME or not ad_CLI_ENDERECO or not ad_CLI_TEL or not ad_CLI_DOC:
+        flash("Dados incompletos")
+        return redirect(url_for(dir_cadastro_clientes)) , 400
     
     conn = get_db_connection()
     cur = conn.cursor()
     
     try:
         # Chamando a procedure de inclusão de dados na tabela de cadastro de produtos
-        cur.callproc( 'add_cliente', ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
+        # cur.callproc( 'add_cliente', ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
+        
+        # Utilizar o comando abaixo enquanto a procedure não é consertada
+        cur.execute( "Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_COMPLEMENT, CLI_CEP, CLI_TEL, CLI_DOC, CLI_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);", ( ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
         conn.commit()
         response = {"message": "Cliente adicionado com sucesso!"}
     except Exception as e:
@@ -81,14 +90,12 @@ def add_cliente():
 @app.route('/alte_cliente', methods=['POST'])
 def alte_cliente():
     data = request.form
-    alte_CLI_CODIGO     = data.get('clientCPF', '').strip()
-    alte_CLI_ENDERECO   = data.get('clientAddress', '').strip()
-    alte_CLI_COMPLEMENT = data.get('clientComplement', '').strip()
-    alte_CLI_CEP        = data.get('clientCEP', '').strip()
-    alte_CLI_TEL        = data.get('clientPhone', '').strip()
-    alte_CLI_OBSERVA    = data.get('clientNote', '').strip()
+    alte_CLI_CODIGO   = data.get('clientCPF', '').strip()
+    alte_CLI_ENDERECO = data.get('clientAddress', '').strip() + data.get('clientComplement', '').strip() + data.get('clientCEP', '').strip()
+    alte_CLI_TEL      = data.get('clientPhone', '').strip()
+    alte_CLI_OBSERVA  = data.get('clientNote', '').strip()
 
-    if not alte_CLI_CODIGO or ( not alte_CLI_ENDERECO and not alte_CLI_TEL  and not alte_CLI_COMPLEMENT  and not alte_CLI_CEP ):
+    if not alte_CLI_CODIGO or ( not alte_CLI_ENDERECO and not alte_CLI_TEL ):
         return "Dados incompletos", 400
     
     conn = get_db_connection()
@@ -96,7 +103,7 @@ def alte_cliente():
     
     try:
         # Chamando a procedure de alteração de dados na tabela de cadastro de produtos
-        cur.callproc( 'alte_cliente', (alte_CLI_CODIGO, alte_CLI_ENDERECO, alte_CLI_COMPLEMENT, alte_CLI_CEP, alte_CLI_TEL, alte_CLI_OBSERVA ) )
+        cur.callproc( 'alte_cliente', (alte_CLI_CODIGO, alte_CLI_ENDERECO, alte_CLI_TEL, alte_CLI_OBSERVA ) )
         conn.commit()
         response = {"message": "Cliente alterados com sucesso!"}
     except Exception as e:
@@ -318,8 +325,11 @@ def dlt_servico():
 
 @app.route('/cad_prod', methods=["POST"])
 def cad_prod():
-    nome = request.form.get('productName', '').strip()
-    preco_raw = request.form.get('productPrice', '').strip()
+
+    data = request.form
+
+    nome = data.get('productName', '').strip()
+    preco_raw = data.get('productPrice', '').strip()
 
     if not nome or not preco_raw:
         return "Dados incompletos", 400
@@ -329,7 +339,6 @@ def cad_prod():
     except ValueError:
         return "Preço inválido", 400
 
-    produtos.append([nome, preco])
     return "Produto adicionado com sucesso"
 
 @app.route('/cad_serv', methods=["POST"])
@@ -353,31 +362,41 @@ def cad_serv():
 
 @app.route('/proc_cliente', methods=["GET"])
 def proc_cliente():
-    data = request.form
-    CLI_CODIGO   = data.get('clientCPF', '').strip()
-    CLI_NOME     = data.get('clientName', '').strip()
-    CLI_TEL      = data.get('clientPhone', '').strip()
-    
+    data = request.args
+    DOC   = data.get('clientCPF', '').strip()
+    NOME     = data.get('clientName', '').strip()
+    TEL      = data.get('clientPhone', '').strip()
+    src = 'SELECT CLI_NOME AS NOME, CLI_DOC AS DOCUMENTO, CLI_TEL AS TELEFONE, CLI_OBSERVA AS OBSERVAÇÕES FROM CLIENTE WHERE D_E_L_E_T_ IS NULL'
+    print(NOME)
     # FORMATA PARA BUSCA PARCIAL
-    src_cod = f"%{CLI_CODIGO}%"
-    src_nome = f"%{CLI_NOME}%"
-    src_tel = f"%{CLI_TEL}%"
+
+    if DOC:
+        src += f" AND CLI_DOC ILIKE \'%{DOC}%\'"
+    
+    if NOME:
+        src += f" AND CLI_NOME ILIKE \'%{NOME}%\'"
+    
+    if TEL:
+        src += f" AND CLI_TEL ILIKE \'%{TEL}%\'"
+    
+    src += ';'
 
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cliente_query = """
-        SELECT * FROM CLIENTE 
-        WHERE CLI_CODIGO LIKE %s OR CLI_NOME LIKE %s OR CLI_TEL LIKE %s;
-    """
 
-    cur.execute(cliente_query, (src_cod, src_nome, src_tel))
-    rows = cur.fetchall()
+    try:
+        cur.execute(src)
+        rows = cur.fetchall()
+    
+    except:
+        mensagem = 'Cliente não encontrado!'
+        return redirect(url_for(dir_cadastro_clientes))
 
     cur.close()
     conn.close()
 
-    return jsonify(rows)
+    return render_template("cadastro_clientes.html", rows=rows)
 
 
 @app.route('/proc_prd', methods=["GET"])
@@ -398,7 +417,7 @@ def proc_produto():
 
     produto_query = """
         SELECT * FROM PRODUTO 
-        WHERE PRD_CODIGO LIKE %s OR PRD_NOME LIKE %s OR PRD_OBSERVA LIKE %s;
+        WHERE (PRD_CODIGO LIKE %s OR PRD_NOME LIKE %s OR PRD_OBSERVA LIKE %s) AND D_E_L_E_T_ = '';
     """
 
     cur.execute(produto_query, (src_cod, src_nome, src_obs))
@@ -407,7 +426,7 @@ def proc_produto():
     cur.close()
     conn.close()
 
-    return jsonify(rows)
+    return rows
  
 
 @app.route('/proc_srv', methods=["GET"])
@@ -428,7 +447,7 @@ def proc_service():
 
     servico_query = """
         SELECT * FROM SERVICO 
-        WHERE SRV_CODIGO LIKE %s OR SRV_NOME LIKE %s OR SRV_OBSERVA LIKE %s;
+        WHERE (SRV_CODIGO LIKE %s OR SRV_NOME LIKE %s OR SRV_OBSERVA LIKE %s) AND D_E_L_E_T_ = '';
     """
 
     cur.execute(servico_query, (src_cod, src_nome, src_obs))
@@ -437,7 +456,7 @@ def proc_service():
     cur.close()
     conn.close()
 
-    return jsonify(rows)
+    return rows
 
 
 

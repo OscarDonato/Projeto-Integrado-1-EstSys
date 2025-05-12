@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estetsys</title>
+    <link rel="stylesheet" href="../static/styles.css" />
+    <script src="../static/setup.js"></script>
+  </head>
+
+  <body>
+    <div class="interface">
+      <header>
+        <div class="display_logo">
+          <a href="/">
+            <img src="../static/logo.png" alt="Logo" class="logo" />
+            <h1>Estetsys</h1>
+          </a>
+        </div>
+        <nav>
+          <ul class="menu">
+            <li><a href="/cadastro_produtos">PRODUTOS</a></li>
+            <li><a href="/cadastro_clientes">CLIENTES</a></li>
+            <li><a href="/cadastro_servicos">SERVIÇOS</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <div class="cad">
+        <section id="products">
+          <h2>PRODUTOS<br /></h2>
+
+          <form id="productForm" onsubmit="addProduct(event)" class="formul">
+            <input type="text" name="productID" placeholder="ID do produto" />
+            <input
+              type="text"
+              name="productName"
+              placeholder="Nome do Produto"
+            />
+            <input type="text" name="productDesc" placeholder="Descrição" />
+            <input
+              type="number"
+              name="productPrice"
+              placeholder="Preço"
+              step="0.01"
+            />
+            <button type="submit" class="addItem">Adicione um produto</button>
+          </form>
+
+          <table class="display_table">
+            <tr>
+              <th class="item">Nome</th>
+              <th class="item">Preço</th>
+            </tr>
+            <tbody id="product-list"></tbody>
+          </table>
+        </section>
+      </div>
+
+    </div>
+  </body>
+</html>

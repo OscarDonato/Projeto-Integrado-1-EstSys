@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estetsys</title>
+    <link rel="stylesheet" href="../static/styles.css" />
+    <script src="../static/setup.js"></script>
+  </head>
+
+  <body>
+    <div class="interface">
+      <header>
+        <div class="display_logo">
+          <a href="/">
+            <img src="../static/logo.png" alt="Logo" class="logo" />
+            <h1>Estetsys</h1>
+          </a>
+        </div>
+        <nav>
+          <ul class="menu">
+            <li><a href="/cadastro_produtos">PRODUTOS</a></li>
+            <li><a href="/cadastro_clientes">CLIENTES</a></li>
+            <li><a href="/cadastro_servicos">SERVIÇOS</a></li>
+          </ul>
+        </nav>
+      </header>
+
+      <div class="cad">
+        <section id="services">
+          <h2>SERVIÇOS</h2>
+          <form id="servicesForm" onsubmit="addService(event)" class="formul">
+            <input type="text" id="srvID" placeholder="ID do serviço" />
+            <input type="text" id="srvName" placeholder="Nome do serviço" />
+            <input
+              type="text"
+              id="srvDesc"
+              placeholder="Descrição do serviço"
+            />
+            <input
+              type="number"
+              id="srvPrice"
+              placeholder="Preço"
+              step="0.01"
+            />
+
+            <button onclick="addService()" class="addItem">
+              Adicione um serviço
+            </button>
+          </form>
+
+          <table class="display_table">
+            <tr>
+              <th class="item">Nome</th>
+              <th class="item">Preço</th>
+            </tr>
+            <tbody id="service-list"></tbody>
+          </table>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>
