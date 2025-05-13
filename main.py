@@ -46,13 +46,26 @@ def get_db_connection():
     conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS)
     return conn
 
+# Função para determinar o CLI_CODIGO MÁXIMO
+
+def max_cli_cod():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT MAX(CLI_CODIGO) FROM CLIENTE;")
+    last_cli_cod = cur.fetchall()[0][0]
+
+    cur.close()
+    conn.close()
+    print(last_cli_cod)
+    return last_cli_cod
+
 ########################    Seção de Cliente   ########################
 
 # Rota para adicionar um produto ao cadastro de produtos
 @app.route('/add_cliente', methods=['POST'])
 def add_cliente():
     data = request.form
-    # ad_CLI_CODIGO     = data.get('clientCPF', '').strip()
+    ad_CLI_CODIGO     = max_cli_cod() + 1
     ad_CLI_NOME       = data.get('clientName', '').strip()
     ad_CLI_ENDERECO	  = data.get('clientAddress', '').strip()
     ad_CLI_COMPLEMENT = data.get('clientComplement', '').strip()
@@ -73,7 +86,7 @@ def add_cliente():
         # cur.callproc( 'add_cliente', ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
         
         # Utilizar o comando abaixo enquanto a procedure não é consertada
-        cur.execute( "Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_COMPLEMENT, CLI_CEP, CLI_TEL, CLI_DOC, CLI_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);", ( ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
+        cur.execute( "Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_COMPLEMENT, CLI_CEP, CLI_TEL, CLI_DOC, CLI_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);", ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
         conn.commit()
         response = {"message": "Cliente adicionado com sucesso!"}
     except Exception as e:
