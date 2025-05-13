@@ -6,7 +6,7 @@ from psycopg2 import sql
 
 app = Flask(__name__)
 CORS(app)  # permite que o frontend chame o backend, especialmente útil localmente
-
+# teste commit
 # Rotas das páginas
 
 @app.route('/')
