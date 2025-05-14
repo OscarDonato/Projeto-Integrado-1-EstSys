@@ -29,8 +29,7 @@
       <div class="cad">
         <section id="products">
           <h2>PRODUTOS<br /></h2>
-
-          <form id="productForm" onsubmit="addProduct(event)" class="formul">
+          <form id="productForm" class="formul" method="POST" action="/add_produto">
             <input type="text" name="productID" placeholder="ID do produto" />
             <input
               type="text"
@@ -44,8 +43,13 @@
               placeholder="Preço"
               step="0.01"
             />
-            <button type="submit" class="addItem">Adicione um produto</button>
+            <div class="form_buttons">
+              <button type="submit" formaction="/proc_prd" formmethod="get" class="addItem">Procurar Produto</button>
+              <button type="submit" class="addItem">Adicione um produto</button>
+            </div>
           </form>
+
+          
 
           <table class="display_table">
             <tr>

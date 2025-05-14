@@ -29,7 +29,7 @@
       <div class="cad">
         <section id="services">
           <h2>SERVIÇOS</h2>
-          <form id="servicesForm" onsubmit="addService(event)" class="formul">
+          <form id="serviceForm" class="formul" method="POST" action="/add_servico">
             <input type="text" id="srvID" placeholder="ID do serviço" />
             <input type="text" id="srvName" placeholder="Nome do serviço" />
             <input
@@ -44,9 +44,10 @@
               step="0.01"
             />
 
-            <button onclick="addService()" class="addItem">
-              Adicione um serviço
-            </button>
+            <div class="form_buttons">
+              <button type="submit" formaction="/proc_srv" formmethod="get" class="addItem">Procurar Serviço</button>
+              <button type="submit" class="addItem">Adicione um Serviço</button>
+            </div>
           </form>
 
           <table class="display_table">
