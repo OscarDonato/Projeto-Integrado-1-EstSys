@@ -90,5 +90,11 @@
         </section>
       </div>
     </div>
+
+    {% if alert %}
+      <script>
+          alert("{{ alert }}");
+      </script>
+    {% endif %}
   </body>
 </html>

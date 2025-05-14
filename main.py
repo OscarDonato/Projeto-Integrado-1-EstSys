@@ -54,12 +54,14 @@ def max_cli_cod():
     cur.execute("SELECT MAX(CLI_CODIGO) FROM CLIENTE;")
     last_cli_cod = cur.fetchall()[0][0]
 
+    if not last_cli_cod:
+        last_cli_cod = 0
+
     cur.close()
     conn.close()
-    print(last_cli_cod)
     return last_cli_cod
 
-########################    Seção de Cliente   ########################
+########################   Seção de Cliente   ########################
 
 # Rota para adicionar um produto ao cadastro de produtos
 @app.route('/add_cliente', methods=['POST'])
@@ -75,8 +77,7 @@ def add_cliente():
     ad_CLI_OBSERVA    = data.get('clientNote', '').strip()
 
     if not ad_CLI_NOME or not ad_CLI_ENDERECO or not ad_CLI_TEL or not ad_CLI_DOC:
-        flash("Dados incompletos")
-        return redirect(url_for(dir_cadastro_clientes)) , 400
+        return render_template("cadastro_clientes.html", alert="Dados incompletos", rows=[])
     
     conn = get_db_connection()
     cur = conn.cursor()
@@ -89,14 +90,15 @@ def add_cliente():
         cur.execute( "Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_COMPLEMENT, CLI_CEP, CLI_TEL, CLI_DOC, CLI_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);", ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
         conn.commit()
         response = {"message": "Cliente adicionado com sucesso!"}
+        rows = [(ad_CLI_NOME, ad_CLI_DOC, ad_CLI_TEL, ad_CLI_OBSERVA)]
     except Exception as e:
-        response = {"error": str(e)}
         conn.rollback()
+        render_template("cadastro_clientes.html", alert=f"Erro ao cadastrar: {str(e)}")
     finally:
         cur.close()
         conn.close()
     
-    return jsonify(response)
+    return render_template("cadastro_clientes.html", rows=rows)
 
 
 # Rota para alterar um cadastro de um cliente
