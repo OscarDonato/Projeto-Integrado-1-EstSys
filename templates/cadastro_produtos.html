@@ -6,6 +6,13 @@
     <title>Estetsys</title>
     <link rel="stylesheet" href="../static/styles.css" />
     <script src="../static/setup.js"></script>
+    <!-- Bootstrap Icons-->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <!-- Bootstrap Icons-->
+    
   </head>
 
   <body>
@@ -30,13 +37,21 @@
         <section id="products">
           <h2>PRODUTOS<br /></h2>
           <form id="productForm" class="formul" method="POST" action="/add_produto">
-            <input type="text" name="productID" placeholder="ID do produto" />
+            <input 
+              type="text" 
+              name="productID" 
+              placeholder="Campo apenas de busca - ID do produto" 
+            />
             <input
               type="text"
               name="productName"
               placeholder="Nome do Produto"
             />
-            <input type="text" name="productDesc" placeholder="Descrição" />
+            <input 
+              type="text" 
+              name="productDesc" 
+              placeholder="Descrição" 
+            />
             <input
               type="number"
               name="productPrice"
@@ -52,15 +67,38 @@
           
 
           <table class="display_table">
-            <tr>
-              <th class="item">Nome</th>
-              <th class="item">Preço</th>
-            </tr>
-            <tbody id="product-list"></tbody>
+            <thead>
+              <tr>
+                <th class="item">ID</th>
+                <th class="item">Nome</th>
+                <th class="item">Preço</th>
+                <th class="item">Descrição</th>
+                <th class="item">Excluir</th>
+              </tr>
+            </thead>
+            <tbody id="product-list">
+              {% for row in rows %}
+              <tr>
+                {% for item in row %}
+                  <td>{{ item }}</td>
+                {% endfor %}
+                <td class="dltitem-btn"><form method="POST" action="/dlt_produto">
+                    <input type="hidden" name="codigo" value="{{ row[0] }}">
+                      <button type="submit" class="delete-btn">X</button>
+                      </form>                    
+                  </td>
+              </tr>
+              {% endfor %}
+            </tbody>
           </table>
         </section>
       </div>
 
     </div>
+    {% if alert %}
+      <script class="alert">
+          alert("{{ alert }}");
+      </script>
+    {% endif %}
   </body>
 </html>

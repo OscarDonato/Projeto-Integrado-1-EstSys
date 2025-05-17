@@ -151,7 +151,6 @@ button.addItem:hover {
 /* Tabela */
 .table-wrapper {
   width: 100%;
-  overflow-x: auto;
 }
 
 table.display_table {
@@ -163,17 +162,47 @@ table.display_table {
   box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-table.display_table th,
-table.display_table td {
+table.display_table thead th, td {
   padding: 10px 12px;
-  border: 1px solid #ddd;
+  border: 1px solid #dddddd6c;
   text-align: center;
   font-size: 14px;
+  vertical-align: middle;
 }
 
-table.display_table th {
-  background-color: #f5f5f5;
-  font-weight: bold;
+table.display_table thead {
+  background-color: #a5a5a58f;
+}
+
+table.display_table tbody td, tr{
+  height: 50px;
+}
+
+.dltitem-btn {
+  width: 100%;
+  padding-bottom: 0px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+.dltitem-btn button{
+  font-size: 14px;
+  text-align: center;
+  width: 30px;
+  height: 25px;   
+  margin-bottom: 40px;
+}
+
+/* Página de vendas */
+
+.prelect_cliente {
+  margin-top: 20px;
+  background-color: #ffffffa9;
+  font-size: 25px;
+  padding: 15px 20px;
+  border-radius: 8px;
 }
 
 /* Ações */
@@ -193,4 +222,9 @@ table.display_table th {
 
 .delete-btn {
   background-color: #d9534f;
+}
+
+.alert {
+  background-color: #d9534f;
+  font-size: 24px;
 }

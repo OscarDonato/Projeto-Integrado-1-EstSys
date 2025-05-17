@@ -30,16 +30,16 @@
         <section id="services">
           <h2>SERVIÇOS</h2>
           <form id="serviceForm" class="formul" method="POST" action="/add_servico">
-            <input type="text" id="srvID" placeholder="ID do serviço" />
-            <input type="text" id="srvName" placeholder="Nome do serviço" />
+            <input type="text" name="srvID" placeholder="Somente para busca - ID do serviço" />
+            <input type="text" name="serviceName" placeholder="Nome do serviço" />
             <input
               type="text"
-              id="srvDesc"
+              name="serviceDesc"
               placeholder="Descrição do serviço"
             />
             <input
               type="number"
-              id="srvPrice"
+              name="servicePrice"
               placeholder="Preço"
               step="0.01"
             />
@@ -51,14 +51,39 @@
           </form>
 
           <table class="display_table">
-            <tr>
-              <th class="item">Nome</th>
-              <th class="item">Preço</th>
-            </tr>
-            <tbody id="service-list"></tbody>
+            <thead>
+              <tr>
+                <th class="item">ID</th>
+                <th class="item">Nome</th>
+                <th class="item">Preço</th>
+                <th class="item">Descrição</th>
+                <th class="item">Excluir</th>
+              </tr>
+            </thead>
+            
+            <tbody id="service-list">
+              {% for row in rows %}
+              <tr>
+                {% for item in row %}
+                  <td>{{ item }}</td>
+                {% endfor %}
+                <td class="dltitem-btn"><form method="POST" action="/dlt_servico">
+                    <input type="hidden" name="codigo" value="{{ row[0] }}">
+                      <button type="submit" class="delete-btn">X</button>
+                      </form>                    
+                  </td>
+              </tr>
+              {% endfor %}
+            </tbody>
           </table>
         </section>
       </div>
     </div>
+    
+    {% if alert %}
+      <script class="alert">
+          alert("{{ alert }}");
+      </script>
+    {% endif %}
   </body>
 </html>

@@ -6,6 +6,13 @@
     <title>Estetsys</title>
     <link rel="stylesheet" href="../static/styles.css" />
     <script src="../static/setup.js"></script>
+    <!-- Bootstrap Icons-->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <!-- Bootstrap Icons-->
+</svg>
   </head>
 
   <body>
@@ -75,6 +82,7 @@
                 <th>CPF</th>
                 <th>Telefone</th>
                 <th>Observações</th>
+                <th>Excluir</th>
               </tr>
             </thead>
             <tbody id="client-list">
@@ -83,6 +91,11 @@
                 {% for item in row %}
                   <td>{{ item }}</td>
                 {% endfor %}
+                  <td class="dltitem-btn"><form method="POST" action="/dlt_cliente">
+                    <input type="hidden" name="codigo" value="{{ row[1] }}">
+                      <button type="submit" class="delete-btn">X</button>
+                      </form>                    
+                  </td>
               </tr>
               {% endfor %}
             </tbody>
@@ -92,7 +105,7 @@
     </div>
 
     {% if alert %}
-      <script>
+      <script class="alert">
           alert("{{ alert }}");
       </script>
     {% endif %}
