@@ -45,6 +45,135 @@ header {
   transform: scale(1.2);
 }
 
+.overlay {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: fixed;
+  background-color: #00000079;
+  z-index: 888;
+  top: 0;
+}
+
+.overlay.show {
+  display: block;
+}
+
+/* Barra lateral - Carrinho */
+  .sidebar {
+    z-index: 999;
+    display: flex;
+    flex-direction: column;
+    width: 40%;
+    align-items: center;
+    text-align: center;
+    position: fixed;
+    top: 0;
+    left: -39%;
+    background-color: #ffe9e9;
+    height: 100%;
+    vertical-align: middle;
+    transition: 0.2s;
+  }
+
+  .sidebar.show {
+    left: 0;
+    transition: 0.2s;
+  }
+
+  .lupa{
+    padding: 10px 12px;
+    font-size: 30px;
+    position: fixed;
+    top: 50%;
+    margin-left: 42%;
+    background-color: #ffe9e9;
+    border-radius: 8px;
+    color: #000000;
+    border: none;
+  }
+
+  .lupa:hover{
+    cursor: pointer;
+  }
+
+  .busca-cart {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+  }
+
+  .sidebar h2 {
+    font-size: 25px;
+  }
+
+  .buscar-item {
+    padding: 6px 12px;
+    font-size: 20px;
+    border: none;
+    border-radius: 10px;
+    background-color: #64004b;
+    color: #ffffff;
+  }
+
+  .close-btn {
+    padding: 8px 12px;
+    background-color: #7e0000;
+    border: none;
+    color: #ddd;
+    margin-top: 15px;
+    margin-left: 90%;
+    margin-bottom: 50px;
+    border-radius: 8px;
+  }
+
+  .close-btn:hover {
+    cursor: pointer;
+  }
+
+  .sidebar input {
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    margin-left: 15px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    font-size: 20px;
+    width: 90%;
+  }
+
+  .select_prdsrv {
+    padding: 8px 10px;
+    font-size: 20px;
+    background-color: #72c7ab;
+    color: #000000;
+    border: none;
+    border-radius: 8px;
+    margin: 25px;
+  }
+
+  .select_prdsrv option{
+    border: none;
+  }
+
+    /* Tabela carrinho */
+
+    .table_container {
+      margin-top: 30px;
+      width: 90%;
+    }
+
+    .cart-table th, .cart-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: center;
+    }
+
+    .cart-table th {
+      background-color: #f0f0f0;
+    }
+
+
 /* Menu Principal */
 header nav {
   margin-top: 10px;
@@ -105,6 +234,16 @@ header nav {
 
 .cad section form input {
   width: 80%;
+}
+
+.cad h2{
+  font-size: 34px;
+}
+
+.cad h3 {
+  font-size: 24px;
+  margin-top: 15px;
+  margin-bottom: 15px;
 }
 
 /* Formulário */
