@@ -370,14 +370,34 @@ def buscar_cliente():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT CLI_NOME, CLI_TEL FROM CLIENTE WHERE CLI_DOC ILIKE %s LIMIT 1", (f"%{cpf}%",))
-
+    cur.execute("SELECT CLI_DOC, CLI_NOME, CLI_TEL FROM CLIENTE WHERE CLI_DOC ILIKE %s LIMIT 1", (f"%{cpf}%",))
     resultado = cur.fetchone()
+    
+    cur.close()
     conn.close()
 
     if resultado:
-        return jsonify({"nome": resultado[0], "telefone": resultado[1]})
+        doc   = resultado[0]
+        nome  = resultado[1]
+        tel   = resultado[2]
+        return jsonify({"nome": nome, "telefone": tel, "doc": doc})
     return jsonify({"erro": "Cliente não encontrado"}), 404
 
+@app.route("/vendas/carrinho")
+def init_carrinho():
+    nome = request.args.get('cli_nome')
+    doc = request.args.get('cli_doc')
+
+    return render_template("carrinho.html", cli_doc = doc, cli_nome = nome )
+
+@app.route("/finalizar_venda", methods=["POST"])
+def finalizar_venda():
+    data = request.get_json()
+
+    for item in data:
+        print(item["id"], item["nome"], item["preco"], item["qtd"])
+
+    return jsonify({"mensagem": "Venda registrada com sucesso!"})
+
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)

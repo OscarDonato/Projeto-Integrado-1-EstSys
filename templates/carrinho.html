@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Estetsys</title>
+    <link rel="stylesheet" href="../static/styles.css" />
+    <script src="../static/setup.js"></script>
+    <!-- Bootstrap Icons-->
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <!-- Bootstrap Icons-->   
+  </head>
+
+  <body>
+    <div class="interface">
+      <header>
+        <div class="display_logo">
+          <a href="/">
+            <img src="../static/logo.png" alt="Logo" class="logo" />
+            <h1>Estetsys</h1>
+          </a>
+        </div>
+      </header>
+
+      <div class="cad">
+        <section id="products">
+          <h2>Carrinho<br /></h2>
+          <h3>Cliente: {{ cli_nome }}</h3>
+          <div>
+            <form id="productForm" class="formul" method="POST" action="/add_produto_cart">
+                <input type="text" name="productID" placeholder="ID do produto"/>
+                <input type="text" name="productName" placeholder="Nome do Produto"/>
+                <button type="submit" class="addItem"><i class="bi bi-cart-plus"></i></button>
+            </form>
+          </div>
+
+          <table class="display_table">
+            <thead>
+              <tr>
+                <th class="item">Item</th>
+                <th class="item">Preço</th>
+                <th class="item">Quantidade</th>
+                <th class="item">Excluir</th>
+              </tr>
+            </thead>
+            <tbody id="cart_lista">
+              {% for row in rows %}
+              <tr>
+                {% for item in row %}
+                  <td>{{ item }}</td>
+                {% endfor %}
+                <td class="dltitem-btn"><form method="POST" action="/dlt_produto">
+                    <input type="hidden" name="codigo" value="{{ row[0] }}">
+                      <button type="submit" class="delete-btn">X</button>
+                      </form>                    
+                  </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <button onclick="finalizarVenda()" class="addItem">Finalizar Venda</button>
+        </section>
+      </div>
+
+    </div>
+    {% if alert %}
+      <script class="alert">
+          alert("{{ alert }}");
+      </script>
+    {% endif %}
+  </body>
+</html>

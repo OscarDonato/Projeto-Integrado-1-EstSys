@@ -30,8 +30,10 @@
             <h2>SELECIONE O CLIENTE PARA A VENDA</h2>
           
             <form class="formul" method="GET" action="/vendas/carrinho">
-              <input type="text" id="cpf" placeholder="CPF" oninput="buscarCliente()" />
-              <div id="resultadoCliente" class="prelect_cliente"></div>
+              <input type="text" id="cpf" placeholder="CPF - sem pontos ou traços" oninput="buscarCliente()" />
+              <input type="hidden" name="cli_nome" value="">
+              <input type="hidden" name="cli_doc" value="">
+              <div id="resultadoCliente" class="prelect_cliente"></div>  
               <button type="submit" class="addItem">Confirmar</button>
             </form>
           </section>
