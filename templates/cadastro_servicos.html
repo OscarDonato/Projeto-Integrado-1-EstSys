@@ -67,10 +67,11 @@
                 {% for item in row %}
                   <td>{{ item }}</td>
                 {% endfor %}
-                <td class="dltitem-btn"><form method="POST" action="/dlt_servico">
-                    <input type="hidden" name="codigo" value="{{ row[0] }}">
+                <td class="dltitem-btn">
+                    <form method="POST" action="/dlt_servico">
+                      <input type="hidden" name="codigo" value="{{ row[0] }}">
                       <button type="submit" class="delete-btn">X</button>
-                      </form>                    
+                    </form>                    
                   </td>
               </tr>
               {% endfor %}

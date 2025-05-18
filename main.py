@@ -125,7 +125,7 @@ def max_prd_cod():
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT MAX(PRD_CODIGO) FROM PRODUTO;")
-    last_prd_cod = cur.fetchall()[0][0]
+    last_prd_cod = cur.fetchone()[0]
 
     if not last_prd_cod:
         last_prd_cod = 0
@@ -235,6 +235,26 @@ def add_servico():
     except Exception as e:
         conn.rollback()
         return render_template("cadastro_servicos.html", alert=f"Erro ao cadastrar: {str(e)}")
+    
+    finally:
+        cur.close()
+        conn.close()
+
+@app.route('/dlt_servico', methods=['POST'])
+def dlt_servico():
+    codigo = request.form.get('codigo')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("UPDATE SERVICO SET D_E_L_E_T_ = %s WHERE SRV_CODIGO = %s;", ('*', codigo))
+        conn.commit()
+        return render_template("cadastro_servicos.html", alert = "Servico excluído com sucesso")
+
+    except Exception as e:
+        conn.rollback()
+        return render_template("cadastro_servicos.html",alert = f"Erro ao excluir produto: {e}")
     
     finally:
         cur.close()
@@ -370,7 +390,7 @@ def buscar_cliente():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT CLI_DOC, CLI_NOME, CLI_TEL FROM CLIENTE WHERE CLI_DOC ILIKE %s LIMIT 1", (f"%{cpf}%",))
+    cur.execute("SELECT CLI_DOC, CLI_NOME, CLI_TEL FROM CLIENTE WHERE D_E_L_E_T_ IS NULL AND CLI_DOC ILIKE %s LIMIT 1", (f"%{cpf}%",))
     resultado = cur.fetchone()
     
     cur.close()
