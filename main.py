@@ -410,14 +410,5 @@ def init_carrinho():
 
     return render_template("carrinho.html", cli_doc = doc, cli_nome = nome )
 
-@app.route("/finalizar_venda", methods=["POST"])
-def finalizar_venda():
-    data = request.get_json()
-
-    for item in data:
-        print(item["id"], item["nome"], item["preco"], item["qtd"])
-
-    return jsonify({"mensagem": "Venda registrada com sucesso!"})
-
 if __name__ == '__main__':
     app.run(debug=True)

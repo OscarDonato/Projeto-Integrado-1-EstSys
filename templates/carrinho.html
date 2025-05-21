@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Estetsys</title>
     <link rel="stylesheet" href="../static/styles.css" />
-    <script src="../static/setup.js"></script>
     <!-- Bootstrap Icons-->
     <link
       rel="stylesheet"
@@ -14,7 +13,7 @@
     <!-- Bootstrap Icons-->   
   </head>
 
-  <body>
+  <body id="body">
     <div class="interface">
       <header>
         <div class="display_logo">
@@ -23,19 +22,13 @@
             <h1>Estetsys</h1>
           </a>
         </div>
+        <button class="addItem" id="toggleSidebarBtn">Buscar Produto/Serviço</button>
       </header>
 
       <div class="cad">
         <section id="products">
           <h2>Carrinho<br /></h2>
           <h3>Cliente: {{ cli_nome }}</h3>
-          <div>
-            <form id="productForm" class="formul" method="POST" action="/add_produto_cart">
-                <input type="text" name="productID" placeholder="ID do produto"/>
-                <input type="text" name="productName" placeholder="Nome do Produto"/>
-                <button type="submit" class="addItem"><i class="bi bi-cart-plus"></i></button>
-            </form>
-          </div>
 
           <table class="display_table">
             <thead>
@@ -47,29 +40,56 @@
               </tr>
             </thead>
             <tbody id="cart_lista">
-              {% for row in rows %}
               <tr>
-                {% for item in row %}
-                  <td>{{ item }}</td>
-                {% endfor %}
-                <td class="dltitem-btn"><form method="POST" action="/dlt_produto">
-                    <input type="hidden" name="codigo" value="{{ row[0] }}">
-                      <button type="submit" class="delete-btn">X</button>
-                      </form>                    
-                  </td>
+
               </tr>
-              {% endfor %}
             </tbody>
           </table>
           <button onclick="finalizarVenda()" class="addItem">Finalizar Venda</button>
         </section>
       </div>
-
     </div>
+    
+    <div class="sidebar" id="sidebar">
+      <button class="close-btn">X</button>
+      <div class="busca-cart"><h2>Buscar</h2>
+
+      <select id="tipoItem" class="select_prdsrv">
+        <option value="produto">Produto</option>
+        <option value="servico">Serviço</option>
+      </select></div>
+
+      <input type="text" id="buscaTexto" placeholder="Digite o nome ou código" />
+      <button onclick="buscarItem()" class="buscar-item">Buscar</button>
+
+      <div id="resultadoBusca">
+        <!-- Resultados de busca aparecerão aqui -->
+      </div>
+
+      <button id="lupa" class="lupa">
+            <i class="bi bi-search"></i>
+      </button>
+
+      <div class="table_container">
+        <table class="display_table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>NOME</th>
+              <th>DESCRIÇÃO</th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+
+    <div id="overlay" class="overlay"></div>
+
     {% if alert %}
       <script class="alert">
           alert("{{ alert }}");
       </script>
     {% endif %}
+    <script src="../static/carrinho.js"></script>
   </body>
 </html>
