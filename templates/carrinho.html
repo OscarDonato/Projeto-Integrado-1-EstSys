@@ -30,18 +30,32 @@
           <h2>Carrinho<br /></h2>
           <h3>Cliente: {{ cli_nome }}</h3>
 
-          <table class="display_table">
+          <table id="cart_lista" class="cart-table">
             <thead>
               <tr>
                 <th class="item">Item</th>
+                <th class="item">Nome</th>
+                <th class="item">Descrição</th>
                 <th class="item">Preço</th>
                 <th class="item">Quantidade</th>
                 <th class="item">Excluir</th>
               </tr>
             </thead>
-            <tbody id="cart_lista">
-              <tr>
-
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                  {% for item in row %}
+                    <td class="spec"><p>{{ item }}</p></td>
+                  {% endfor %}
+                    <td class="spec"><input class="ct-input" type="number" step="1"></td>
+                    <td class="spec">
+                      <form method="POST" action="/dlt_item_cart">
+                        <input type="hidden" name="codigo" value="{{ row[1] }}">
+                        <button type="submit" class="delete-btn"><p>X</p></button>
+                      </form>                    
+                    </td>
+                  </tr>
+                {% endfor %}
               </tr>
             </tbody>
           </table>
@@ -77,8 +91,12 @@
               <th>ID</th>
               <th>NOME</th>
               <th>DESCRIÇÃO</th>
+              <th>ADD</th>
             </tr>
           </thead>
+          <tbody>
+            <!-- Preenchido dinamicamente por buscarItem() -->
+          </tbody>
         </table>
       </div>
     </div>

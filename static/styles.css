@@ -116,6 +116,12 @@ header {
     color: #ffffff;
   }
 
+  .buscar-item:hover {
+    cursor: pointer;
+    color: #cacaca;
+    box-shadow: 3px 3px 5px #0000003b;
+  }
+
   .close-btn {
     padding: 8px 12px;
     background-color: #7e0000;
@@ -156,6 +162,20 @@ header {
     border: none;
   }
 
+  .cart-add {
+    font-size: 22px;
+    color: #ffffff;
+    padding: 5px 8px;
+    background-color: #1c8b00;
+    border: none;
+    border-radius: 8px;
+  }
+
+  .cart-add:hover {
+    cursor: pointer;
+    box-shadow: 2px 2px 5px #00000059;
+  }
+
     /* Tabela carrinho */
 
     .table_container {
@@ -163,7 +183,16 @@ header {
       width: 90%;
     }
 
-    .cart-table th, .cart-table td {
+    .cart-table{
+      width: 100%;
+      border-collapse: collapse;
+      background-color: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    .cart-table th, .cart-table td.item {
       border: 1px solid #ddd;
       padding: 8px;
       text-align: center;
@@ -171,6 +200,15 @@ header {
 
     .cart-table th {
       background-color: #f0f0f0;
+    }
+
+    .spec p{
+      display: block;
+      line-height: 20px !important;
+    }
+
+    .ct-input {
+      width: 60px !important;
     }
 
 
@@ -313,11 +351,7 @@ table.display_table thead {
   background-color: #a5a5a58f;
 }
 
-table.display_table tbody td, tr{
-  height: 50px;
-}
-
-.dltitem-btn {
+.item-btn {
   width: 100%;
   padding-bottom: 0px;
   display: flex;
