@@ -42,6 +42,33 @@
         <div class="cad">
           <section>
             <h2>ÚLTIMAS VENDAS REALIZADAS</h2>
+
+            <!-- Precisa fazer aqui aparecerem as vendas do BD -->
+            <!-- <table class="display_table">
+              <thead>
+                <tr>
+                  <th>Cliente</th>
+                  <th>Produtos</th>
+                  <th>Total</th>
+                  <th></th>
+                  <th>Excluir</th>
+                </tr>
+              </thead>
+              <tbody id="client-list">
+                {% for row in rows %}
+                <tr>
+                  {% for item in row %}
+                    <td>{{ item }}</td>
+                  {% endfor %}
+                    <td class="dltitem-btn"><form method="POST" action="/dlt_cliente">
+                      <input type="hidden" name="codigo" value="{{ row[1] }}">
+                        <button type="submit" class="delete-btn">X</button>
+                        </form>                    
+                    </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table> -->
           </section>
         </div>
     </div>

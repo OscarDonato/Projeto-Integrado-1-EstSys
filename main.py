@@ -1,5 +1,6 @@
 from flask import Flask, request, redirect, url_for, jsonify, render_template, session
 from flask_cors import CORS
+from datetime import datetime
 import psycopg2
 
 app = Flask(__name__)
@@ -468,13 +469,12 @@ def add_item_cart():
     carrinho = session.get('carrinho',[])
     
     data = request.args
-    id = data.get('id')
-    # tipo = data.get('tipo')
+    id_item = data.get('id')
     nome = data.get('itemnome')
     desc = data.get('descricao')
     preco = float(data.get('preco'))
 
-    newitemCart = [id,nome,desc,preco]
+    newitemCart = [id_item,nome,desc,preco]
 
     if newitemCart:
         carrinho.append(newitemCart)
@@ -520,20 +520,25 @@ def get_max_vndcod():
 @app.route('/submit_carrinho', methods = ['POST'])
 def submit_carrinho():
     valor_total = 0
-    cliente = session['cliente']
+    cliente = session['cliente'] 
     carrinho = session['carrinho']
     
-    bigStrCart = ''
+    # cliente é [doc,nome,tel,cod]
+    # item é [id_item,nome,desc,preco]
+    LsCart = [] # cada item é um str 'nome | preço | quantidade'
 
     for i in carrinho:
-        # cria uma bigstring para os nomes e quantidades
-        bigStrCart += i[1]
-        print(bigStrCart)
+        LsCart.append(i[1] + ' | '+str(i[3])+' | ')
 
         # Pega o nome substituído no carrinho.js para poder recuperar a informação do form com os input hidden que contém as quantidades
         nome = i[1].replace(' ', '_') + '_qt'
         qt = request.form.get(nome)
-        valor_total += float(i[-1])*float(qt)
+        LsCart[-1]+=str(qt) # concatena qt à string do item em LsCart
+        print(LsCart)
+        valor_total += float(i[3])*float(qt)
+
+    bigStrCart = ', '.join(LsCart) # para ficar ["nome1 | preço1 | quantidade1","nome2 | preço2 | quantidade2" .... ]
+    print(bigStrCart)
 
     ad_vnd_cod = get_max_vndcod()
     vnd_cliente = cliente[3]
@@ -541,16 +546,23 @@ def submit_carrinho():
     vnd_tel = cliente[2]
     vnd_doc = cliente[0]
 
+    agora = datetime.now()
+    data_formatada = agora.strftime('%Y-%m-%d %H:%M:%S')
+
     conn = get_db_connection()
     cur = conn.cursor()
 
+# Precisa fazer na query um ALTER TABLE VENDAS ADD VND_DATA DATE
+# Formato da data: YYYY-MM-DD hh:mm:ss
     cur.execute("""INSERT INTO VENDAS (VND_CODIGO, VND_CLIENTE, VND_NOMECLI, VND_TEL, VND_DOC,
-                VND_PRODUTO, VND_NOMEPRD, VND_QTDAPRD, VND_TOTAPRD, D_E_L_E_T_, R_E_C_N_O_, 
-                R_E_C_D_E_L_) VALUES ( %s, %s, %s, %s, NULL, 1, NULL);
-                """,ad_vnd_cod,vnd_cliente,vnd_nomecli,vnd_tel,vnd_doc)
+                VND_PRODUTO, VND_NOMEPRD, VND_TOTAPRD, VND_DATA, D_E_L_E_T_, R_E_C_N_O_, 
+                R_E_C_D_E_L_) VALUES ( %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);
+                """,(ad_vnd_cod,vnd_cliente,vnd_nomecli,vnd_tel,vnd_doc,bigStrCart,valor_total,data_formatada))
 
     conn.close()
     cur.close()
+
+    session.clear()
 
     return jsonify({"valor_total":valor_total})
 
