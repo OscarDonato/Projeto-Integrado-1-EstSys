@@ -47,19 +47,21 @@
                   {% for item in row %}
                     <td class="spec"><p>{{ item }}</p></td>
                   {% endfor %}
-                    <td class="spec"><input class="ct-input" type="number" step="1"></td>
+                    <td class="spec"><input id="{{ row[1] | replace(' ', '_') }}_qt" class="ct-input" type="number" step="1" min="1"></td>
                     <td class="spec">
                       <form method="POST" action="/dlt_item_cart">
-                        <input type="hidden" name="codigo" value="{{ row[1] }}">
-                        <button type="submit" class="delete-btn"><p>X</p></button>
-                      </form>                    
+                        <input type="hidden" name="nome" value="{{ row[1] }}">
+                        <button type="submit" class="delete-btn">X</button>
+                      </form>
                     </td>
                   </tr>
                 {% endfor %}
               </tr>
             </tbody>
           </table>
-          <button onclick="finalizarVenda()" class="addItem">Finalizar Venda</button>
+          <form id="finalizarVenda" action="/submit_carrinho" method="POST">
+            <button type="button" onclick="getQts()" class="addItem">Finalizar Venda</button>
+          </form>  
         </section>
       </div>
     </div>

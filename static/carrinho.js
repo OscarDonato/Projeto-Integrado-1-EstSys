@@ -66,7 +66,7 @@ function preencherTabelaBusca(itens, tipo) {
 
     // Adicionar evento ao botão
     btn.addEventListener('click', function (event) {
-      // event.preventDefault();
+      // event.preventDefault();  ==> seria para impedir recarregamento, mas não deu pra fazer funcionar direito
       const form = btn.querySelector('form');
       adicionarAoCarrinho(form);
     });
@@ -79,7 +79,7 @@ function preencherTabelaBusca(itens, tipo) {
 }
 
 function adicionarAoCarrinho(form) {
-
+  // CHAMADO PELA FUNÇAO CRIADA ACIMA EM BTN
   id       = form.getElementById('id').value;
   tipo     = form.getElementById('tipo').value;
   itemnome = form.getElementById('itemnome').value;
@@ -89,4 +89,30 @@ function adicionarAoCarrinho(form) {
   fetch(`/add_item_cart?id=${id}&tipo=${tipo}&itemnome=${itemnome}&descricao=${descr}&preco=${preco}`)
     .then(response => response.json())
     .catch(error => console.error('Erro na busca:', error));
+}
+
+async function getQts() {
+  try {
+    const response = await fetch('/get_qts');
+    const cartItens = await response.json();
+
+    const form = document.getElementById('finalizarVenda');
+
+    cartItens.forEach(row => {
+      const nome = row[1].replaceAll(' ', '_') + "_qt";
+      const input = document.getElementById(nome);
+      if (input) {
+        const hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.name = nome;
+        hiddenInput.value = input.value;
+        form.appendChild(hiddenInput);
+      }
+    });
+
+    // Envia o formulário principal depois de capturar os dados
+    form.submit();
+  } catch (error) {
+    console.error('Erro ao buscar itens do carrinho:', error);
+  }
 }

@@ -1,17 +1,20 @@
-from flask import Flask, flash, request, redirect, url_for, jsonify, render_template
+from flask import Flask, request, redirect, url_for, jsonify, render_template, session
 from flask_cors import CORS
 import psycopg2
 
 app = Flask(__name__)
-CORS(app)  # permite que o frontend chame o backend, especialmente útil localmente
+CORS(app)
+
+app.secret_key = '19i320od$'  # permite que o frontend chame o backend, especialmente útil localmente
 # teste commit
 # Rotas das páginas
 
-carrinho = []
-cliente = []
+# carrinho = []
+# cliente = []
 
 @app.route('/')
 def index():
+    session.clear()
     return render_template('index.html')
 
 @app.route('/cadastro_clientes')
@@ -28,7 +31,6 @@ def dir_cadastro_servicos():
 
 @app.route('/vendas')
 def dir_vendas():
-    cliente = ()
     return render_template('vendas.html')
 
 
@@ -384,6 +386,7 @@ def proc_service():
         cur.close()
         conn.close()
 
+####################################################################
 ############################# ROTAS PARA VENDA #####################
 
 @app.route("/buscar_cliente")
@@ -393,7 +396,7 @@ def buscar_cliente():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute("SELECT CLI_DOC, CLI_NOME, CLI_TEL FROM CLIENTE WHERE D_E_L_E_T_ IS NULL AND CLI_DOC ILIKE %s LIMIT 1", (f"%{cpf}%",))
+    cur.execute("SELECT CLI_DOC, CLI_NOME, CLI_TEL, CLI_CODIGO FROM CLIENTE WHERE D_E_L_E_T_ IS NULL AND CLI_DOC ILIKE %s LIMIT 1", (f"%{cpf}%",))
     resultado = cur.fetchone()
     
     cur.close()
@@ -403,22 +406,14 @@ def buscar_cliente():
         doc   = resultado[0]
         nome  = resultado[1]
         tel   = resultado[2]
-        global cliente
-        cliente = [doc,nome,tel]
+        cod   = resultado[3]
+        cliente = [doc,nome,tel,cod]
+        session['cliente'] = cliente
+
+        print(session['cliente'])
+        
         return jsonify({"nome": nome, "telefone": tel, "doc": doc})
     return jsonify({"erro": "Cliente não encontrado"}), 404
-
-@app.route("/vendas/carrinho")
-def init_carrinho():
-    global cliente
-    global carrinho
-
-    doc = cliente[0]
-    nome = cliente[1]
-
-    carrinho = []
-
-    return render_template("carrinho.html", cli_doc = doc, cli_nome = nome )
 
 @app.route('/buscar-item', methods=['GET'])
 def buscar_item():
@@ -445,45 +440,45 @@ def buscar_item():
     colnames = [desc[0] for desc in cur.description]
     dados = [dict(zip(colnames, row)) for row in resultados]
 
-
     return jsonify(dados)
 
-def dltitemcart(item):
-    global carrinho
+@app.route("/vendas/carrinho")
+def init_carrinho():
+    # global cliente
+    # global carrinho
 
-    for i in carrinho:
-        print(i)
-        if i[1] == str(item):
-            inx = carrinho.index(i)
-            print(50*i)
-            carrinho.pop(inx)
-            break
-    return
+    doc = session['cliente'][0]
+    nome = session['cliente'][1]
+
+    return render_template("carrinho.html", cli_doc = doc, cli_nome = nome )
 
 @app.route('/montar_cart')
 def montar_cart():
-    global cliente
+    # global cliente
+    carrinho = session.get('carrinho',[])
 
-    cli_nome = cliente[1]
-    cli_doc = cliente[0]
+    cli_nome = session['cliente'][1]
+    cli_doc = session['cliente'][0]
 
     return render_template("carrinho.html", rows = carrinho, cli_nome = cli_nome, cli_doc = cli_doc)
 
 @app.route('/add_item_cart', methods=['GET'])
 def add_item_cart():
-    global carrinho
+    # global carrinho
+    carrinho = session.get('carrinho',[])
     
     data = request.args
     id = data.get('id')
     # tipo = data.get('tipo')
     nome = data.get('itemnome')
     desc = data.get('descricao')
-    preco = data.get('preco')
+    preco = float(data.get('preco'))
 
-    newitemCart = (id,nome,desc,preco)
+    newitemCart = [id,nome,desc,preco]
 
     if newitemCart:
         carrinho.append(newitemCart)
+        session['carrinho'] = carrinho
     else:
         print(newitemCart)
 
@@ -492,11 +487,73 @@ def add_item_cart():
 @app.route('/dlt_item_cart', methods=['POST'])
 def dlt_item_cart():
     data = request.form
-    item = data.get('codigo')
+    item = data.get('nome')
 
-    print(item)
-    dltitemcart(item)
+    carrinho = session['carrinho']
+
+    for i in carrinho:
+        if i[1] == str(item):
+            inx = carrinho.index(i)
+            carrinho.pop(inx)
+            session['carrinho'] = carrinho
+            break
     return redirect(url_for('montar_cart'))
+
+@app.route('/get_qts',methods=['GET'])
+def get_qts():
+    carrinho = session['carrinho']
+    return jsonify(carrinho)
+
+def get_max_vndcod():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute('SELECT MAX(VND_CODIGO) FROM VENDAS')
+    last_vndcod = cur.fetchone()[0]
+    if not last_vndcod:
+        last_vndcod = 0
+
+    conn.close()
+    cur.close()
+    return last_vndcod
+
+@app.route('/submit_carrinho', methods = ['POST'])
+def submit_carrinho():
+    valor_total = 0
+    cliente = session['cliente']
+    carrinho = session['carrinho']
+    
+    bigStrCart = ''
+
+    for i in carrinho:
+        # cria uma bigstring para os nomes e quantidades
+        bigStrCart += i[1]
+        print(bigStrCart)
+
+        # Pega o nome substituído no carrinho.js para poder recuperar a informação do form com os input hidden que contém as quantidades
+        nome = i[1].replace(' ', '_') + '_qt'
+        qt = request.form.get(nome)
+        valor_total += float(i[-1])*float(qt)
+
+    ad_vnd_cod = get_max_vndcod()
+    vnd_cliente = cliente[3]
+    vnd_nomecli = cliente[1]
+    vnd_tel = cliente[2]
+    vnd_doc = cliente[0]
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""INSERT INTO VENDAS (VND_CODIGO, VND_CLIENTE, VND_NOMECLI, VND_TEL, VND_DOC,
+                VND_PRODUTO, VND_NOMEPRD, VND_QTDAPRD, VND_TOTAPRD, D_E_L_E_T_, R_E_C_N_O_, 
+                R_E_C_D_E_L_) VALUES ( %s, %s, %s, %s, NULL, 1, NULL);
+                """,ad_vnd_cod,vnd_cliente,vnd_nomecli,vnd_tel,vnd_doc)
+
+    conn.close()
+    cur.close()
+
+    return jsonify({"valor_total":valor_total})
+
 
 if __name__ == '__main__':
     app.run(debug=True)
