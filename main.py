@@ -10,8 +10,15 @@ app.secret_key = '19i320od$'  # permite que o frontend chame o backend, especial
 # teste commit
 # Rotas das páginas
 
-# carrinho = []
-# cliente = []
+DB_HOST = "localhost"
+DB_NAME = "estetsys"
+DB_USER = "estetsys"
+DB_PASS = "estetsys"
+
+# Função para conectar ao banco de dados do Estetsys como 
+def get_db_connection():
+    conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS)
+    return conn
 
 @app.route('/')
 def index():
@@ -32,8 +39,15 @@ def dir_cadastro_servicos():
 
 @app.route('/vendas')
 def dir_vendas():
-    return render_template('vendas.html')
+    conn = get_db_connection()
+    cur = conn.cursor()
 
+    cur.execute("SELECT VND_CODIGO, VND_NOMECLI, VND_DOC, VND_NOMEPRD, VND_TOTAL, TO_CHAR(VND_DATA, 'YYYY-MM-DD HH24:MI') FROM VENDAS WHERE d_e_l_e_t_ IS NULL ORDER BY VND_DATA DESC;")
+    vendas = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    return render_template('vendas.html', rows=vendas)
 
 ##################################################################################################################################################
 ##################################################################################################################################################
@@ -41,15 +55,7 @@ def dir_vendas():
 ##################################################################################################################################################
 # Configurações do banco de dados
 
-DB_HOST = "localhost"
-DB_NAME = "estetsys"
-DB_USER = "estetsys"
-DB_PASS = "estetsys"
 
-# Função para conectar ao banco de dados do Estetsys como 
-def get_db_connection():
-    conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS)
-    return conn
 
 # Função para determinar o CLI_CODIGO MÁXIMO
 
@@ -517,6 +523,26 @@ def get_max_vndcod():
     cur.close()
     return last_vndcod
 
+@app.route('/dlt_venda', methods=['POST'])
+def dlt_venda():
+    codigo = request.form.get('codigo')
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("UPDATE VENDAS SET D_E_L_E_T_ = %s WHERE VND_CODIGO = %s;", ('*', codigo))
+        conn.commit()
+        return redirect(url_for("dir_vendas"))
+
+    except Exception as e:
+        conn.rollback()
+        return render_template("vendas.html",alert = f"Erro ao excluir produto: {e}")
+    
+    finally:
+        cur.close()
+        conn.close()
+
 @app.route('/submit_carrinho', methods = ['POST'])
 def submit_carrinho():
     valor_total = 0
@@ -534,37 +560,38 @@ def submit_carrinho():
         nome = i[1].replace(' ', '_') + '_qt'
         qt = request.form.get(nome)
         LsCart[-1]+=str(qt) # concatena qt à string do item em LsCart
-        print(LsCart)
         valor_total += float(i[3])*float(qt)
 
     bigStrCart = ', '.join(LsCart) # para ficar ["nome1 | preço1 | quantidade1","nome2 | preço2 | quantidade2" .... ]
-    print(bigStrCart)
 
-    ad_vnd_cod = get_max_vndcod()
+    ad_vnd_cod = get_max_vndcod()+1
     vnd_cliente = cliente[3]
     vnd_nomecli = cliente[1]
     vnd_tel = cliente[2]
     vnd_doc = cliente[0]
-
-    agora = datetime.now()
-    data_formatada = agora.strftime('%Y-%m-%d %H:%M:%S')
 
     conn = get_db_connection()
     cur = conn.cursor()
 
 # Precisa fazer na query um ALTER TABLE VENDAS ADD VND_DATA DATE
 # Formato da data: YYYY-MM-DD hh:mm:ss
-    cur.execute("""INSERT INTO VENDAS (VND_CODIGO, VND_CLIENTE, VND_NOMECLI, VND_TEL, VND_DOC,
-                VND_PRODUTO, VND_NOMEPRD, VND_TOTAPRD, VND_DATA, D_E_L_E_T_, R_E_C_N_O_, 
-                R_E_C_D_E_L_) VALUES ( %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);
-                """,(ad_vnd_cod,vnd_cliente,vnd_nomecli,vnd_tel,vnd_doc,bigStrCart,valor_total,data_formatada))
+    try:
+        cur.execute("""INSERT INTO VENDAS (VND_CODIGO, VND_CLIENTE, VND_NOMECLI, VND_TEL, VND_DOC,
+                    VND_NOMEPRD, VND_TOTAL, D_E_L_E_T_, R_E_C_N_O_, 
+                    R_E_C_D_E_L_) VALUES ( %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);
+                    """,(ad_vnd_cod, vnd_cliente, vnd_nomecli, str(vnd_tel), vnd_doc, bigStrCart, valor_total))
+        conn.commit()
+        return redirect(url_for("dir_vendas"))
 
-    conn.close()
-    cur.close()
+    except Exception as e:
+        conn.rollback()
+        print("Erro ao inserir venda:", e)
+        return jsonify({"Erro": str(e)})
 
-    session.clear()
-
-    return jsonify({"valor_total":valor_total})
+    finally:
+        conn.close()
+        cur.close()
+        session.clear()
 
 
 if __name__ == '__main__':

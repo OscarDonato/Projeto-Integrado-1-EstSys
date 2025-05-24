@@ -44,13 +44,15 @@
             <h2>ÚLTIMAS VENDAS REALIZADAS</h2>
 
             <!-- Precisa fazer aqui aparecerem as vendas do BD -->
-            <!-- <table class="display_table">
+            <table class="display_table">
               <thead>
                 <tr>
+                  <th>Cod</th>
                   <th>Cliente</th>
+                  <th>Doc</th>
                   <th>Produtos</th>
-                  <th>Total</th>
-                  <th></th>
+                  <th>Valor total</th>
+                  <th>Data</th>
                   <th>Excluir</th>
                 </tr>
               </thead>
@@ -60,17 +62,22 @@
                   {% for item in row %}
                     <td>{{ item }}</td>
                   {% endfor %}
-                    <td class="dltitem-btn"><form method="POST" action="/dlt_cliente">
-                      <input type="hidden" name="codigo" value="{{ row[1] }}">
+                    <td class="spec"><form method="POST" action="/dlt_venda">
+                      <input type="hidden" name="codigo" value="{{ row[0] }}">
                         <button type="submit" class="delete-btn">X</button>
                         </form>                    
                     </td>
                 </tr>
                 {% endfor %}
               </tbody>
-            </table> -->
+            </table>
           </section>
         </div>
     </div>
+    {% if alert %}
+      <script class="alert">
+          alert("{{ alert }}");
+      </script>
+    {% endif %}
   </body>
 </html>
