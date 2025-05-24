@@ -1,31 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Estetsys</title>
-    <link rel="stylesheet" href="../static/styles.css" />
-    <script src="../static/setup.js"></script>
-  </head>
+{% extends "base.html" %}
 
-  <body>
-    <div class="interface">
-      <header>
-        <div class="display_logo">
-          <a href="/">
-            <img src="../static/logo.png" alt="Logo" class="logo" />
-            <h1>Estetsys</h1>
-          </a>
-        </div>
-        <nav>
-          <ul class="menu">
-            <li><a href="/cadastro_produtos">PRODUTOS</a></li>
-            <li><a href="/cadastro_clientes">CLIENTES</a></li>
-            <li><a href="/cadastro_servicos">SERVIÇOS</a></li>
-          </ul>
-        </nav>
-      </header>
+{% block itensmenu %}
+  <li><a href="/cadastro_produtos">PRODUTOS</a></li>
+  <li><a href="/cadastro_clientes">CLIENTES</a></li>
+  <li><a href="/cadastro_servicos">SERVIÇOS</a></li>
+{% endblock %}
 
+{% block content %}
       <div class="cad">
         <section id="services">
           <h2>SERVIÇOS</h2>
@@ -79,12 +60,4 @@
           </table>
         </section>
       </div>
-    </div>
-    
-    {% if alert %}
-      <script class="alert">
-          alert("{{ alert }}");
-      </script>
-    {% endif %}
-  </body>
-</html>
+{% endblock %}

@@ -1,12 +1,13 @@
 from flask import Flask, request, redirect, url_for, jsonify, render_template, session
 from flask_cors import CORS
-from datetime import datetime
 import psycopg2
 
 app = Flask(__name__)
 CORS(app)
 
-app.secret_key = '19i320od$'  # permite que o frontend chame o backend, especialmente útil localmente
+app.secret_key = '19i320od$'
+global login_key
+login_key = 'G15estetsys'
 # teste commit
 # Rotas das páginas
 
@@ -20,22 +21,62 @@ def get_db_connection():
     conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS)
     return conn
 
+def valid_login():
+    global login_key
+    senha = session.get('senha')
+    if senha == login_key:
+        return True
+    else:
+        return False
+
+@app.route('/ver_login', methods = ['POST'])
+def ver_login():
+    data = request.form
+    senha = data.get('senha')
+    session['senha'] = senha
+    if valid_login() == False:
+        return redirect(url_for("login"))
+    else:
+        return redirect(url_for("index"))
+
 @app.route('/')
+def login():
+    return render_template("login.html", alert = "VOCÊ PRECISA LOGAR COM A SENHA CORRETA!")
+
+@app.route('/sair')
+def sair():
+    session.pop('senha', None)
+    return redirect(url_for("login"))
+
+@app.route('/index')
 def index():
-    session.clear()
-    return render_template('index.html')
+    session.pop('cliente', None)
+    session.pop('carrinho', None)
+    if valid_login() == False:
+        return redirect(url_for("login"))
+    else:
+        return render_template('index.html')
 
 @app.route('/cadastro_clientes')
 def dir_cadastro_clientes():
-    return render_template('cadastro_clientes.html')
+    if valid_login() == False:
+        return redirect(url_for("login"))
+    else:
+        return render_template('cadastro_clientes.html')
 
 @app.route('/cadastro_produtos')
 def dir_cadastro_produtos():
-    return render_template('cadastro_produtos.html')
+    if valid_login() == False:
+        return redirect(url_for("login"))
+    else:
+        return render_template('cadastro_produtos.html')
 
 @app.route('/cadastro_servicos')
 def dir_cadastro_servicos():
-    return render_template('cadastro_servicos.html')
+    if valid_login() == False:
+        return redirect(url_for("login"))
+    else:
+        return render_template('cadastro_servicos.html')
 
 @app.route('/vendas')
 def dir_vendas():
@@ -47,7 +88,11 @@ def dir_vendas():
 
     cur.close()
     conn.close()
-    return render_template('vendas.html', rows=vendas)
+
+    if valid_login() == False:
+        return redirect(url_for("login"))
+    else:
+        return render_template('vendas.html', rows=vendas)
 
 ##################################################################################################################################################
 ##################################################################################################################################################
@@ -88,7 +133,10 @@ def add_cliente():
     ad_CLI_OBSERVA    = data.get('clientNote', '').strip()
 
     if not ad_CLI_NOME or not ad_CLI_ENDERECO or not ad_CLI_TEL or not ad_CLI_DOC:
-        return render_template("cadastro_clientes.html", alert="Dados incompletos", rows=[])
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_clientes.html", alert="Dados incompletos", rows=[])
     
     conn = get_db_connection()
     cur = conn.cursor()
@@ -101,14 +149,24 @@ def add_cliente():
         cur.execute( "Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_COMPLEMENT, CLI_CEP, CLI_TEL, CLI_DOC, CLI_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);", ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
         conn.commit()
         rows = [(ad_CLI_NOME, ad_CLI_DOC, ad_CLI_TEL, ad_CLI_OBSERVA)]
+        
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_clientes.html", alert=f"Cliente adicionado com sucesso!",rows=rows)
+    
     except Exception as e:
         conn.rollback()
-        render_template("cadastro_clientes.html", alert=f"Erro ao cadastrar: {str(e)}")
+
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_clientes.html", alert=f"Erro ao cadastrar: {str(e)}")
     finally:
         cur.close()
         conn.close()
     
-    return render_template("cadastro_clientes.html", alert=f"Cliente adicionado com sucesso!",rows=rows)
+    
 
 # Rota para deletar um cadastro de um cliente
 @app.route('/dlt_cliente', methods=['POST'])
@@ -122,11 +180,18 @@ def dlt_cliente():
     try:
         cur.execute("UPDATE CLIENTE SET D_E_L_E_T_ = %s WHERE CLI_DOC = %s;", ('*', codigo))
         conn.commit()
-        return render_template("cadastro_clientes.html", alert = "Cliente excluído com sucesso")
+
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_clientes.html", alert = "Cliente excluído com sucesso")
 
     except Exception as e:
         conn.rollback()
-        return render_template("cadastro_clientes.html",alert = f"Erro ao excluir cliente: {e}")
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_clientes.html",alert = f"Erro ao excluir cliente: {e}")
     finally:
         cur.close()
         conn.close()
@@ -157,7 +222,10 @@ def add_produto():
     ad_PRD_OBSERVA = data.get('productDesc', '').strip()
 
     if not ad_PRD_NOME or not ad_PRD_PRECO or not ad_PRD_CODIGO or not ad_PRD_OBSERVA:
-        return render_template("cadastro_produtos.html", alert="Dados incompletos", rows=[])
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_produtos.html", alert="Dados incompletos", rows=[])
     
     conn = get_db_connection()
     cur = conn.cursor()
@@ -170,6 +238,11 @@ def add_produto():
         cur.execute( "Insert Into PRODUTO ( PRD_CODIGO, PRD_NOME, PRD_PRECO, PRD_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, NULL, 1, NULL);", ( ad_PRD_CODIGO, ad_PRD_NOME, ad_PRD_PRECO, ad_PRD_OBSERVA))
         conn.commit()
         rows = [(ad_PRD_CODIGO, ad_PRD_NOME, ad_PRD_PRECO, ad_PRD_OBSERVA)]
+        
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_produtos.html", alert="Produto adicionado com sucesso!", rows=rows)
 
     except Exception as e:
         conn.rollback()
@@ -179,7 +252,7 @@ def add_produto():
         cur.close()
         conn.close()
     
-    return render_template("cadastro_produtos.html", alert="Produto adicionado com sucesso!", rows=rows)
+    
 
 # Rota para deletar um cadastro de um produto
 @app.route('/dlt_produto', methods=['POST'])
@@ -192,11 +265,18 @@ def dlt_produto():
     try:
         cur.execute("UPDATE PRODUTO SET D_E_L_E_T_ = %s WHERE PRD_CODIGO = %s;", ('*', codigo))
         conn.commit()
-        return render_template("cadastro_produtos.html", alert = "Produto excluído com sucesso")
+        
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_produtos.html", alert = "Produto excluído com sucesso")
 
     except Exception as e:
         conn.rollback()
-        return render_template("cadastro_produtos.html",alert = f"Erro ao excluir produto: {e}")
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_produtos.html",alert = f"Erro ao excluir produto: {e}")
     
     finally:
         cur.close()
@@ -228,7 +308,10 @@ def add_servico():
     ad_SRV_OBSERVA = data.get('serviceDesc', '').strip()
 
     if not ad_SRV_NOME or not ad_SRV_PRECO or not ad_SRV_OBSERVA:
-        return render_template("cadastro_servicos.html", alert="Dados incompletos", rows=[])
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_servicos.html", alert="Dados incompletos", rows=[])
     
     conn = get_db_connection()
     cur = conn.cursor()
@@ -242,11 +325,17 @@ def add_servico():
         conn.commit()
         rows = [(ad_SRV_CODIGO, ad_SRV_NOME, ad_SRV_PRECO, ad_SRV_OBSERVA)]
         
-        return render_template("cadastro_servicos.html", alert="Serviço adicionado com sucesso!", rows=rows)
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_servicos.html", alert="Serviço adicionado com sucesso!", rows=rows)
 
     except Exception as e:
         conn.rollback()
-        return render_template("cadastro_servicos.html", alert=f"Erro ao cadastrar: {str(e)}")
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_servicos.html", alert=f"Erro ao cadastrar: {str(e)}")
     
     finally:
         cur.close()
@@ -262,11 +351,18 @@ def dlt_servico():
     try:
         cur.execute("UPDATE SERVICO SET D_E_L_E_T_ = %s WHERE SRV_CODIGO = %s;", ('*', codigo))
         conn.commit()
-        return render_template("cadastro_servicos.html", alert = "Servico excluído com sucesso")
+
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_servicos.html", alert = "Servico excluído com sucesso")
 
     except Exception as e:
         conn.rollback()
-        return render_template("cadastro_servicos.html",alert = f"Erro ao excluir produto: {e}")
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_servicos.html",alert = f"Erro ao excluir produto: {e}")
     
     finally:
         cur.close()
@@ -307,16 +403,22 @@ def proc_cliente():
     try:
         cur.execute(src)
         rows = cur.fetchall()
+
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_clientes.html", rows=rows, alert = "Clientes encontrados!")
     
     except:
         mensagem = 'Cliente não encontrado!'
-        return redirect(url_for(dir_cadastro_clientes))
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return redirect(url_for(dir_cadastro_clientes))
 
-    cur.close()
-    conn.close()
-
-    return render_template("cadastro_clientes.html", rows=rows)
-
+    finally:
+        cur.close()
+        conn.close()
 
 @app.route('/proc_prd', methods=["GET"])
 def proc_produto():
@@ -383,11 +485,19 @@ def proc_service():
     try:
         cur.execute(src)
         rows = cur.fetchall()
-        return render_template("cadastro_servicos.html", rows = rows)
+
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_servicos.html", rows = rows)
 
     except Exception as e:
         conn.rollback()
-        return render_template("cadastro_servicos.html", alert = f"Erro ao buscar serviço: {e}")
+        
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("cadastro_servicos.html", alert = f"Erro ao buscar serviço: {e}")
             
     finally:
         cur.close()
@@ -419,8 +529,15 @@ def buscar_cliente():
 
         print(session['cliente'])
         
-        return jsonify({"nome": nome, "telefone": tel, "doc": doc})
-    return jsonify({"erro": "Cliente não encontrado"}), 404
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return jsonify({"nome": nome, "telefone": tel, "doc": doc})
+    
+    if valid_login() == False:
+            return redirect(url_for("login"))
+    else:
+        return jsonify({"erro": "Cliente não encontrado"}), 404
 
 @app.route('/buscar-item', methods=['GET'])
 def buscar_item():
@@ -428,7 +545,10 @@ def buscar_item():
     termo = request.args.get('texto')
 
     if tipo not in ['produto', 'servico']:
-        return jsonify({'erro': 'Tipo inválido'}), 400
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return jsonify({'erro': 'Tipo inválido'}), 400
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -447,7 +567,10 @@ def buscar_item():
     colnames = [desc[0] for desc in cur.description]
     dados = [dict(zip(colnames, row)) for row in resultados]
 
-    return jsonify(dados)
+    if valid_login() == False:
+            return redirect(url_for("login"))
+    else:
+        return jsonify(dados)
 
 @app.route("/vendas/carrinho")
 def init_carrinho():
@@ -457,7 +580,10 @@ def init_carrinho():
     doc = session['cliente'][0]
     nome = session['cliente'][1]
 
-    return render_template("carrinho.html", cli_doc = doc, cli_nome = nome )
+    if valid_login() == False:
+            return redirect(url_for("login"))
+    else:
+        return render_template("carrinho.html", cli_doc = doc, cli_nome = nome )
 
 @app.route('/montar_cart')
 def montar_cart():
@@ -467,7 +593,10 @@ def montar_cart():
     cli_nome = session['cliente'][1]
     cli_doc = session['cliente'][0]
 
-    return render_template("carrinho.html", rows = carrinho, cli_nome = cli_nome, cli_doc = cli_doc)
+    if valid_login() == False:
+            return redirect(url_for("login"))
+    else:
+        return render_template("carrinho.html", rows = carrinho, cli_nome = cli_nome, cli_doc = cli_doc)
 
 @app.route('/add_item_cart', methods=['GET'])
 def add_item_cart():
@@ -488,7 +617,10 @@ def add_item_cart():
     else:
         print(newitemCart)
 
-    return redirect(url_for('montar_cart'))
+    if valid_login() == False:
+            return redirect(url_for("login"))
+    else:
+        return redirect(url_for('montar_cart'))
 
 @app.route('/dlt_item_cart', methods=['POST'])
 def dlt_item_cart():
@@ -503,12 +635,18 @@ def dlt_item_cart():
             carrinho.pop(inx)
             session['carrinho'] = carrinho
             break
-    return redirect(url_for('montar_cart'))
+    if valid_login() == False:
+            return redirect(url_for("login"))
+    else:
+        return redirect(url_for('montar_cart'))
 
 @app.route('/get_qts',methods=['GET'])
 def get_qts():
     carrinho = session['carrinho']
-    return jsonify(carrinho)
+    if valid_login() == False:
+            return redirect(url_for("login"))
+    else:
+        return jsonify(carrinho)
 
 def get_max_vndcod():
     conn = get_db_connection()
@@ -533,11 +671,17 @@ def dlt_venda():
     try:
         cur.execute("UPDATE VENDAS SET D_E_L_E_T_ = %s WHERE VND_CODIGO = %s;", ('*', codigo))
         conn.commit()
-        return redirect(url_for("dir_vendas"))
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return redirect(url_for("dir_vendas"))
 
     except Exception as e:
         conn.rollback()
-        return render_template("vendas.html",alert = f"Erro ao excluir produto: {e}")
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("vendas.html",alert = f"Erro ao excluir produto: {e}")
     
     finally:
         cur.close()
@@ -586,12 +730,16 @@ def submit_carrinho():
     except Exception as e:
         conn.rollback()
         print("Erro ao inserir venda:", e)
-        return jsonify({"Erro": str(e)})
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return jsonify({"Erro": str(e)})
 
     finally:
         conn.close()
         cur.close()
-        session.clear()
+        session.pop('cliente', None)
+        session.pop('carrinho', None)
 
 
 if __name__ == '__main__':
