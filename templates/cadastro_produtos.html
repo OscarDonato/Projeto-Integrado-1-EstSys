@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block itensmenu %}
+            <li><a href="/cadastro_produtos">PRODUTOS</a></li>
+            <li><a href="/cadastro_clientes">CLIENTES</a></li>
+            <li><a href="/cadastro_servicos">SERVIÇOS</a></li>
+{% endblock %}
+
+{% block content %}
+      <div class="cad">
+        <section id="products">
+          <h2>PRODUTOS<br /></h2>
+          <form id="productForm" class="formul" method="POST" action="/add_produto">
+            <input 
+              type="text" 
+              name="productID" 
+              placeholder="Campo apenas de busca - ID do produto" 
+            />
+            <input
+              type="text"
+              name="productName"
+              placeholder="Nome do Produto"
+            />
+            <input 
+              type="text" 
+              name="productDesc" 
+              placeholder="Descrição" 
+            />
+            <input
+              type="number"
+              name="productPrice"
+              placeholder="Preço"
+              step="0.01"
+            />
+            <div class="form_buttons">
+              <button type="submit" formaction="/proc_prd" formmethod="get" class="addItem">Procurar Produto</button>
+              <button type="submit" class="addItem">Adicione um produto</button>
+            </div>
+          </form>
+
+          
+
+          <table class="display_table">
+            <thead>
+              <tr>
+                <th class="item">ID</th>
+                <th class="item">Nome</th>
+                <th class="item">Preço</th>
+                <th class="item">Descrição</th>
+                <th class="item">Excluir</th>
+              </tr>
+            </thead>
+            <tbody id="product-list">
+              {% for row in rows %}
+              <tr>
+                {% for item in row %}
+                  <td>{{ item }}</td>
+                {% endfor %}
+                <td class="dltitem-btn"><form method="POST" action="/dlt_produto">
+                    <input type="hidden" name="codigo" value="{{ row[0] }}">
+                      <button type="submit" class="delete-btn">X</button>
+                      </form>                    
+                  </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+      </div>
+{% endblock %}

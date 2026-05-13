@@ -1,22 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1>Bem vindo ao Stetsys</h1>
+{% extends "base.html" %}
 
-<nav>
-    <nav>
-        <ul class="menu">
-          <li><a href="#">VENDAS</a></li>
-          <li><a href="/cadastros">CADASTROS</a></li>
-          <li><a href="#">SERVIÇOS</a></li>
-        </ul>
-      </nav>
-</nav>
+{% block itensmenu %}
+  <li><a href="/vendas">VENDAS</a></li>
+  <li><a href="/cadastro_clientes">CADASTROS</a></li>
+{% endblock %}
 
-</body>
-</html>
+{% block content %}
+  <h1>Bem vindo ao Stetsys</h1>
+{% endblock %}

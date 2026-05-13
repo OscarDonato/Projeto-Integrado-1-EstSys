@@ -1,158 +1,157 @@
-function showTab(tabId) {
-  document.getElementById("products").style.display = "none";
-  document.getElementById("clients").style.display = "none";
-  document.getElementById("services").style.display = "none";
-  document.getElementById(tabId).style.display = "flex";
-}
+  window.addEventListener("DOMContentLoaded", () => {
+    const alertBox = document.getElementById("alert-box");
+    if (alertBox && alertBox.textContent.trim() !== "") {
+      alertBox.classList.add("show");
+    }
+  });
 
-function addProduct(event) {
-  event.preventDefault();  // <- ESSENCIAL para impedir o recarregamento
+  /////////////////////////////    VENDAS        /////////////////////////
 
-  //recebe o formulário como um elemento só a partir de "event"
-  const form = event.target;
-  const name = form.productName.value;
-  const priceInput = form.productPrice.value;
-  const priceFloat = parseFloat(priceInput);
+  async function buscarCliente() {
+    const cpf = document.getElementById("cpf").value.trim();
 
-  if (name && !isNaN(priceFloat)) {
-    const formData = new FormData(form);
-
-    fetch('/cad_prod', {  // manda o formulário para o flask
-      method: 'POST',
-      body: formData
-    })
-
-    //recebe de volta do flask
-    .then(res => res.ok ? res.text() : res.text().then(t => { throw new Error(t); })) 
-    .then(() => {
-      const priceFormatted = priceFloat.toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
-      });
-
-      const row = `<tr>
-        <td>${name}</td>
-        <td>${priceFormatted}</td>
-        <td>
-          <button onclick="editRow(this)">✏️</button>
-          <button onclick="deleteRow(this)">🗑️</button>
-        </td>
-      </tr>`;
-      document.getElementById('product-list').innerHTML += row;
-
-      form.reset(); // limpa os campos
-    })
-    .catch(err => alert("Erro: " + err.message));
-  }
-}
-
-function addService(event) {
-    event.preventDefault();
-    const form = event.target;
-    const name = form.serviceName.value;
-    const priceInput = form.servicePrice.value;
-    const priceFloat = parseFloat(priceInput);
-
-    if (name && !isNaN(priceFloat)) {
-      const formData = new FormData(form);
-  
-      fetch('/cad_serv', {  // manda o formulário para o flask
-        method: 'POST',
-        body: formData
-      })
-  
-      //recebe de volta do flask
-      .then(res => res.ok ? res.text() : res.text().then(t => { throw new Error(t); })) 
-      .then(() => {
-        const priceFormatted = priceFloat.toLocaleString('pt-BR', {
-          style: 'currency',
-          currency: 'BRL'
-        });
-  
-        const row = `<tr>
-          <td>${name}</td>
-          <td>${priceFormatted}</td>
-          <td>
-            <button onclick="editRow(this)">✏️</button>
-            <button onclick="deleteRow(this)">🗑️</button>
-          </td>
-        </tr>`;
-        document.getElementById('service-list').innerHTML += row;
-  
-        form.reset(); // limpa os campos
-      })
-      .catch(err => alert("Erro: " + err.message));
+    if (cpf.length < 3) {
+      document.getElementById("resultadoCliente").textContent = "";  // limpa se pouco texto
+      document.querySelector("input[name='cli_nome']").value = "";
+      document.querySelector("input[name='cli_doc']").value = "";
+      return;
     }
 
-}
+    try {
+      const resp = await fetch(`/buscar_cliente?cpf=${encodeURIComponent(cpf)}`);
+      const data = await resp.json();
 
-function addClient() {
-  const name = document.getElementById("clientName").value;
-  let cpf = document.getElementById("clientCPF").value.replace(/\D/g, ""); // Removendo todos os caracteres que não são números
-  let phone = document.getElementById("clientPhone").value.replace(/\D/g, "");
-
-  // Validação do CPF (Deve conter exatamente 11 digitos)
-  if (cpf.length !== 11) {
-      alert("ERRO!\n(CPF deve conter 11 números E seguir formato XXX.XXX.XXX-XX)");
-      return;
+      if (resp.ok) {
+        document.querySelector("input[name='cli_nome']").value = data.nome;
+        document.querySelector("input[name='cli_doc']").value = data.doc;
+        document.getElementById("resultadoCliente").textContent =
+          `Nome: ${data.nome} | Telefone: ${data.telefone}`;
+      } else {
+        document.querySelector("input[name='cli_nome']").value = '';
+        document.querySelector("input[name='cli_doc']").value = '';
+        document.getElementById("resultadoCliente").textContent = "Cliente não encontrado";
+      }
+    } catch {
+      document.getElementById("resultadoCliente").textContent = "Erro ao buscar cliente";
+    }
   }
-  
-  // Validação do número (Deve conter 11 digitos, incluindo o código de área)
-  if (phone.length !== 11) {
-      alert("ERRO!\n(Número de telefone deve conter 11 números E seguir formato (XX) XXXXX-XXXX)");
-      return;
-  }
 
-  // Formatando o CPF para: XXX.XXX.XXX-XX
-  cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  ///////////////////////////  CARRINHO   /////////////////////////////////////
+  ////////////////// Mostra | esconde a sidebar e overlay ////////////////////
 
-  // Formatando o Telefone para (XX) XXXXX-XXXX
-  phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, "($1) $2-$3");
-
-  if (name && cpf && phone) {
-      const row = `<tr><td>${name}</td><td>${cpf}</td><td>${phone}</td>
-          <td>
-              <button class='edit-btn' onclick='editRow(this)'>✏️</button>
-              <button class='delete-btn' onclick='deleteRow(this)'>🗑️</button>
-          </td></tr>`;
-      document.getElementById("client-list").innerHTML += row;
-  }
-}
-
-//FUNÇÕES DE EDIÇÃO E EXCLUSÃO
-
-function editRow(button) {
-  const row = button.parentElement.parentElement;
-  const cells = row.querySelectorAll("td:not(:last-child)"); // Excluí o conteúdo anterior
-
-  cells.forEach((cell) => {
-    const input = document.createElement("input");
-    input.type = "text";
-    input.value = cell.innerText;
-    cell.innerHTML = "";
-    cell.appendChild(input);
+document.getElementById('toggleSidebarBtn').addEventListener('click', function () {
+    document.getElementById('sidebar').classList.toggle('show');
+    document.getElementById('overlay').classList.toggle('show');
   });
 
-  button.innerText = "✅"; // Troca o botão para salvar
-  button.onclick = function () {
-    saveRow(this);
-  };
-}
-
-function saveRow(button) {
-  const row = button.parentElement.parentElement;
-  const inputs = row.querySelectorAll("input");
-
-  inputs.forEach((input) => {
-    input.parentElement.innerText = input.value; // Substitui o imput por texto
+document.getElementById('lupa').addEventListener('click', function () {
+    document.getElementById('sidebar').classList.toggle('show');
+    document.getElementById('overlay').classList.toggle('show');
   });
 
-  button.innerText = "✏️"; // Faz o botão voltar a ser o lápis de edição
-  button.onclick = function () {
-    editRow(this);
-  };
+  document.querySelector('.close-btn').addEventListener('click', function () {
+    document.getElementById('sidebar').classList.remove('show');
+    document.getElementById('overlay').classList.remove('show');
+  });
+
+  document.getElementById('overlay').addEventListener('click', function() {
+    document.getElementById('sidebar').classList.remove('show');
+    document.getElementById('overlay').classList.remove('show');
+  })
+
+
+//////////////// Busca de dados JS <--> flask <--> BD///////////////////
+
+let carrinho = [];
+
+function buscarItem() {
+  const tipo = document.getElementById('tipoItem').value;
+  const texto = document.getElementById('buscaTexto').value;
+
+  fetch(`/buscar-item?tipo=${tipo}&texto=${encodeURIComponent(texto)}`)
+    .then(response => response.json())
+    .then(dados => preencherTabelaBusca(dados, tipo))
+    .catch(error => console.error('Erro na busca:', error));
 }
 
-function deleteRow(button) {
-  button.parentElement.parentElement.remove();
+// Preencher tabela lateral de busca
+function preencherTabelaBusca(itens, tipo) {
+  const tbody = document.querySelector('.sidebar .display_table tbody');
+  tbody.innerHTML = '';
+
+  itens.forEach(item => {
+    const row = document.createElement('tr');
+
+    // Criar o HTML da linha, sem o botão ainda
+    row.innerHTML = `
+      <td>${item.id}</td>
+      <td>${item.nome}</td>
+      <td>${item.observa}</td>
+      <td></td> <!-- célula para o botão -->
+    `;
+
+    // Criar o botão
+    const btn = document.createElement('div');
+    btn.innerHTML = `<form action="/add_item_cart" method="GET">
+                        <input type="hidden" id="tipo" name="tipo" value="${tipo}">
+                        <input type="hidden" id="id" name="id" value="${item.id}">
+                        <input type="hidden" id="itemnome" name="itemnome" value="${item.nome}">
+                        <input type="hidden" id="descricao" name="descricao" value="${item.observa}">
+                        <input type="hidden" id="preco" name="preco" value="${item.preco}">
+                        <button type= "submit" formmethod="GET" class="cart-add" formaction="/add_item_cart">
+                          <i class="bi bi-cart-plus"></i>
+                        </button>
+                    </form>`;
+
+    // Adicionar evento ao botão
+    btn.addEventListener('click', function (event) {
+      // event.preventDefault();  ==> seria para impedir recarregamento, mas não deu pra fazer funcionar direito
+      const form = btn.querySelector('form');
+      adicionarAoCarrinho(form);
+    });
+
+    // Colocar o botão na última célula da linha
+    row.lastElementChild.appendChild(btn);
+
+    tbody.appendChild(row);
+  });
+}
+
+function adicionarAoCarrinho(form) {
+  // CHAMADO PELA FUNÇAO CRIADA ACIMA EM BTN
+  id       = form.getElementById('id').value;
+  tipo     = form.getElementById('tipo').value;
+  itemnome = form.getElementById('itemnome').value;
+  descr    = form.getElementById('descricao').value;
+  preco    = form.getElementById('preco').value;
+
+  fetch(`/add_item_cart?id=${id}&tipo=${tipo}&itemnome=${itemnome}&descricao=${descr}&preco=${preco}`)
+    .then(response => response.json())
+    .catch(error => console.error('Erro na busca:', error));
+}
+
+async function getQts() {
+  try {
+    const response = await fetch('/get_qts');
+    const cartItens = await response.json();
+
+    const form = document.getElementById('finalizarVenda');
+
+    cartItens.forEach(row => {
+      const nome = row[1].replaceAll(' ', '_') + "_qt";
+      const input = document.getElementById(nome);
+      if (input) {
+        const hiddenInput = document.createElement("input");
+        hiddenInput.type = "hidden";
+        hiddenInput.name = nome;
+        hiddenInput.value = input.value;
+        form.appendChild(hiddenInput);
+      }
+    });
+
+    // Envia o formulário principal depois de capturar os dados
+    form.submit();
+  } catch (error) {
+    console.error('Erro ao buscar itens do carrinho:', error);
+  }
 }

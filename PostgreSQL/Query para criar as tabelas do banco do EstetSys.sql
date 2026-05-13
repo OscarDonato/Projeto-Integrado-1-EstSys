@@ -28,6 +28,8 @@ Create Domain dm_nmet Varchar(150)					;
 Create Domain dm_ende Varchar(150)					;
 Create Domain dm_tele Varchar(20)					;
 Create Domain dm_docm Varchar(50)					;
+Create Domain dm_comp Varchar(50)					;
+Create Domain dm_cep  Varchar(50)					;
 Create Domain dm_codi Numeric(10) 		Not Null	;
 Create Domain dm_cdet Numeric(10) 					;
 Create Domain dm_prec Numeric(10, 2)	Default 0	;
@@ -50,6 +52,8 @@ Create Table CLIENTE(
 	CLI_CODIGO		dm_codi Unique,
 	CLI_NOME		dm_nome,
 	CLI_ENDERECO	dm_ende,
+	CLI_COMPLEMENT	dm_comp,
+	CLI_CEP			dm_cep ,
 	CLI_TEL			dm_tele,
 	CLI_DOC			dm_docm,
 	CLI_OBSERVA 	dm_obse,
@@ -80,17 +84,19 @@ Execute Function set_recno_client();
 --	3.3 Cria Procedure para inclusão de dados na tabela de clientes
 -----------
 Create Or Replace Procedure add_cliente(
-    ad_CLI_CODIGO	dm_codi,
-	ad_CLI_NOME		dm_nome,
-	ad_CLI_ENDERECO	dm_ende,
-	ad_CLI_TEL		dm_tele,
-	ad_CLI_DOC		dm_docm,
-	ad_CLI_OBSERVA 	dm_obse
+    ad_CLI_CODIGO		dm_codi,
+	ad_CLI_NOME			dm_nome,
+	ad_CLI_ENDERECO		dm_ende,
+	ad_CLI_COMPLEMENT	dm_comp,
+	ad_CLI_CEP			dm_cep ,
+	ad_CLI_TEL			dm_tele,
+	ad_CLI_DOC			dm_docm,
+	ad_CLI_OBSERVA 		dm_obse
 )
 Language plpgsql As $$
 Begin
-    Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_TEL, CLI_DOC, CLI_OBSERVA )
-    Values ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA );
+    Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_COMPLEMENT, CLI_CEP, CLI_TEL, CLI_DOC, CLI_OBSERVA )
+    Values ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA );
 End;
 $$;
 
@@ -98,8 +104,10 @@ $$;
 --	3.4 Cria Procedure para alterar registro dos dados na tabela de clientes
 -----------
 Create Or Replace Procedure alte_cliente(
-    alte_recno			dm_recn,
+	alte_CLI_CODIGO		dm_codi,
 	alte_CLI_ENDERECO	dm_ende,
+	alte_CLI_COMPLEMENT	dm_comp,
+	alte_CLI_CEP		dm_cep ,
 	alte_CLI_TEL		dm_tele,
 	alte_CLI_OBSERVA 	dm_obse
 )
@@ -108,17 +116,27 @@ Begin
 
 	If IsNull( alte_CLI_ENDERECO, '' ) <> ''
 		Then
-        Update CLIENTE Set CLI_ENDERECO = alte_CLI_ENDERECO Where R_E_C_N_O_ = alte_recno;
+        Update CLIENTE Set CLI_ENDERECO = alte_CLI_ENDERECO Where CLI_CODIGO = alte_CLI_CODIGO;
+    End If;
+	
+	If IsNull( alte_CLI_COMPLEMENT, '' ) <> ''
+		Then
+        Update CLIENTE Set CLI_COMPLEMENT = alte_CLI_COMPLEMENT Where CLI_CODIGO = alte_CLI_CODIGO;
+    End If;
+	
+	If IsNull( alte_CLI_CEP, '' ) <> ''
+		Then
+        Update CLIENTE Set CLI_CEP = alte_CLI_CEP Where CLI_CODIGO = alte_CLI_CODIGO;
     End If;
 	
 	If IsNull( alte_CLI_TEL, '' ) <> ''
 		Then
-        Update CLIENTE Set CLI_TEL = alte_CLI_TEL Where R_E_C_N_O_ = alte_recno;
+        Update CLIENTE Set CLI_TEL = alte_CLI_TEL Where CLI_CODIGO = alte_CLI_CODIGO;
     End If;
 	
 	If IsNull( alte_CLI_OBSERVA, '' ) <> ''
 		Then
-        Update CLIENTE Set CLI_OBSERVA = alte_CLI_OBSERVA Where R_E_C_N_O_ = alte_recno;
+        Update CLIENTE Set CLI_OBSERVA = alte_CLI_OBSERVA Where CLI_CODIGO = alte_CLI_CODIGO;
     End If;
 	
 End;
@@ -129,11 +147,11 @@ $$;
 --	3.5 Cria Procedure para "deletar" registro dos dados na tabela de clientes
 -----------
 Create Or Replace Procedure dlt_cliente(
-    dlt_recno		dm_recn
+	dlt_CLI_CODIGO		dm_codi
 )
 Language plpgsql As $$
 Begin
-    Update CLIENTE Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = dlt_recno Where R_E_C_N_O_ = dlt_recno;
+    Update CLIENTE Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ Where CLI_CODIGO = dlt_CLI_CODIGO;
 End;
 $$;
 
@@ -203,7 +221,7 @@ $$;
 --	4.4 Cria Procedure para alterar registro dos dados na tabela de Produto
 -----------
 Create Or Replace Procedure alte_produto(
-    alte_recno			dm_recn,
+	alte_PRD_CODIGO		dm_codi,
 	alte_PRD_PRECO		dm_prec,
 	alte_PRD_OBSERVA 	dm_obse
 )
@@ -212,12 +230,12 @@ Begin
 
 	If IsNull( alte_PRD_PRECO, '' ) <> ''
 		Then
-        Update PRODUTO Set PRD_PRECO = alte_PRD_PRECO Where R_E_C_N_O_ = alte_recno;
+        Update PRODUTO Set PRD_PRECO = alte_PRD_PRECO Where PRD_CODIGO = alte_PRD_CODIGO;
     End If;
 	
 	If IsNull( alte_PRD_OBSERVA, '' ) <> ''
 		Then
-        Update PRODUTO Set PRD_OBSERVA = alte_PRD_OBSERVA Where R_E_C_N_O_ = alte_recno;
+        Update PRODUTO Set PRD_OBSERVA = alte_PRD_OBSERVA Where PRD_CODIGO = alte_PRD_CODIGO;
     End If;
 		
 End
@@ -228,14 +246,14 @@ $$;
 --	4.5 Cria Procedure para "deletar" registro dos dados na tabela de Produto
 -----------
 Create Or Replace Procedure dlt_produto(
-    dlt_recno		dm_recn
+	dlt_PRD_CODIGO		dm_codi
 )
 Language plpgsql As $$
 Begin
     UPDATE PRODUTO
     SET D_E_L_E_T_ = '*',
-        R_E_C_D_E_L_ = dlt_recno
-    WHERE R_E_C_N_O_ = dlt_recno;
+        R_E_C_D_E_L_ = R_E_C_N_O_
+    WHERE PRD_CODIGO = dlt_PRD_CODIGO;
 End;
 $$;
 
@@ -303,7 +321,7 @@ $$;
 --	5.3 Cria Procedure para alterar registro dos dados na tabela de Servico
 -----------
 Create Or Replace Procedure alte_servico(
-    alte_recno			dm_recn,
+	alte_SRV_CODIGO		dm_codi,
 	alte_SRV_PRECO		dm_prec,
 	alte_SRV_OBSERVA 	dm_obse
 )
@@ -312,12 +330,12 @@ Begin
 
 	If IsNull( alte_SRV_PRECO, '' ) <> ''
 		Then
-        Update SERVICO Set SRV_PRECO = alte_SRV_PRECO Where R_E_C_N_O_ = alte_recno;
+        Update SERVICO Set SRV_PRECO = alte_SRV_PRECO Where SRV_CODIGO = alte_SRV_CODIGO;
     End If;
 	
 	If IsNull( alte_SRV_OBSERVA, '' ) <> ''
 		Then
-        Update SERVICO Set SRV_OBSERVA = alte_SRV_OBSERVA Where R_E_C_N_O_ = alte_recno;
+        Update SERVICO Set SRV_OBSERVA = alte_SRV_OBSERVA Where SRV_CODIGO = alte_SRV_CODIGO;
     End If;
 		
 End;
@@ -328,11 +346,11 @@ $$;
 --	5.4 Cria Procedure para "deletar" registro dos dados na tabela de Servico
 -----------
 Create Or Replace Procedure dlt_servico(
-    dlt_recno		dm_recn
+	dlt_SRV_CODIGO		dm_codi
 )
 Language plpgsql As $$
 Begin
-    Update SERVICO Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ Where R_E_C_N_O_ = dlt_recno;
+    Update SERVICO Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ Where SRV_CODIGO = dlt_SRV_CODIGO;
 End;
 $$;
 
@@ -355,7 +373,7 @@ $$;
 --	6.1 Cria Tabela Vendas
 -----------
 Create Table VENDAS(
-	VND_CODIGO		dm_codi,
+	VND_CODIGO		dm_codi UNIQUE,
 	
 	VND_CLIENTE		dm_cdet,
 	VND_NOMECLI		dm_nmet,
@@ -471,7 +489,7 @@ $$;
 --	6.3 Cria Procedure para alterar registro dos dados na tabela de Produto
 -----------
 Create Or Replace Procedure alte_venda(
-    alte_recno			dm_recn,
+	alte_VND_CODIGO		dm_codi,
 	alte_VND_TEL		dm_tele,
 	alte_VND_DOC		dm_docm,
 	alte_VND_PRODUTO	dm_cdet,
@@ -493,72 +511,72 @@ Begin
 	
 	If IsNull( alte_VND_TEL, '' ) <> ''
 		Then
-        Update VENDAS Set VND_TEL = alte_VND_TEL Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_TEL = alte_VND_TEL Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_DOC, '' ) <> ''
 		Then
-        Update VENDAS Set VND_DOC = alte_VND_DOC Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_DOC = alte_VND_DOC Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_PRODUTO, '' ) <> ''
 		Then
-        Update VENDAS Set VND_PRODUTO = alte_VND_PRODUTO Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_PRODUTO = alte_VND_PRODUTO Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_NOMEPRD, '' ) <> ''
 		Then
-        Update VENDAS Set VND_NOMEPRD = alte_VND_NOMEPRD Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_NOMEPRD = alte_VND_NOMEPRD Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_PRECPRD, '' ) <> ''
 		Then
-        Update VENDAS Set VND_PRECPRD = alte_VND_PRECPRD Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_PRECPRD = alte_VND_PRECPRD Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_QTDAPRD, '' ) <> ''
 		Then
-        Update VENDAS Set VND_QTDAPRD = alte_VND_QTDAPRD Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_QTDAPRD = alte_VND_QTDAPRD Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_TOTAPRD, '' ) <> ''
 		Then
-        Update VENDAS Set VND_TOTAPRD = alte_VND_TOTAPRD Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_TOTAPRD = alte_VND_TOTAPRD Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_SERVICO, '' ) <> ''
 		Then
-        Update VENDAS Set VND_SERVICO = alte_VND_SERVICO Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_SERVICO = alte_VND_SERVICO Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_NOMESRV, '' ) <> ''
 		Then
-        Update VENDAS Set VND_NOMESRV = alte_VND_NOMESRV Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_NOMESRV = alte_VND_NOMESRV Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_PRECSRV, '' ) <> ''
 		Then
-        Update VENDAS Set VND_PRECSRV = alte_VND_PRECSRV Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_PRECSRV = alte_VND_PRECSRV Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_QTDASRV, '' ) <> ''
 		Then
-        Update VENDAS Set VND_QTDASRV = alte_VND_QTDASRV Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_QTDASRV = alte_VND_QTDASRV Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_TOTASRV, '' ) <> ''
 		Then
-        Update VENDAS Set VND_TOTASRV = alte_VND_TOTASRV Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_TOTASRV = alte_VND_TOTASRV Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 	
 	If IsNull( alte_VND_TOTAL, '' ) <> ''
 		Then
-        Update VENDAS Set VND_TOTAL = alte_VND_TOTAL Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_TOTAL = alte_VND_TOTAL Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 		
 	If IsNull( alte_VND_OBSERVA, '' ) <> ''
 		Then
-        Update VENDAS Set VND_OBSERVA = alte_VND_OBSERVA Where R_E_C_N_O_ = alte_recno;
+        Update VENDAS Set VND_OBSERVA = alte_VND_OBSERVA Where VND_CODIGO = alte_VND_CODIGO;
     End If;
 			
 End;
@@ -569,11 +587,11 @@ $$;
 --	6.4 Cria Procedure para "deletar" registro dos dados na tabela de Produto
 -----------
 Create Or Replace Procedure dlt_venda(
-    dlt_recno		dm_recn
+    dlt_VND_CODIGO		dm_codi
 )
 Language plpgsql As $$
 Begin
-    Update VENDAS Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ Where R_E_C_N_O_ = dlt_recno;
+    Update VENDAS Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ Where VND_CODIGO = dlt_VND_CODIGO;
 End;
 $$;
 

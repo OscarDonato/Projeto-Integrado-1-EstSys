@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block itensmenu %}
+<h1>Entrar no sistema</h1>
+{% endblock %}
+
+{% block content %}
+  <div class="cad-login">
+    <section id="password">
+      <h2>INSIRA A SENHA<br /></h2>
+      <form action="/ver_login" method="POST">
+        <input type="password" name="senha" placeholder="Senha do sistema">
+        <button type="submit" class="addItem" formaction="/ver_login" formmethod="POST">ENTRAR</button>
+      </form>
+    </section>
+  </div>
+{% endblock %}

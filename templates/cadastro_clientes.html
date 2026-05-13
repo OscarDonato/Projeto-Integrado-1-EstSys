@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block itensmenu %}
+  <li><a href="/cadastro_produtos">PRODUTOS</a></li>
+  <li><a href="/cadastro_clientes">CLIENTES</a></li>
+  <li><a href="/cadastro_servicos">SERVIÇOS</a></li>
+{% endblock %}
+
+{% block content %}
+  <div class="cad">
+    <section id="clients">
+      <h2>CLIENTES<br /></h2>
+      <form id="customerForm" class="formul" method="POST" action="/add_cliente">
+        <!-- Antes era onsubmit="addClient(event)" -->
+        <input type="text" name="clientName" placeholder="Nome do Cliente" />
+        <input type="text" name="clientCPF" placeholder="CPF (xxx.xxx.xxx-xx)" maxlength="14"/>
+        <input type="text" name="clientPhone" placeholder="Celular (xx) xxxxx-xxxx"maxlength="15"/>
+        <input type="text" name="clientCEP" placeholder="CEP (xxxxx-xxx)" maxlength="9" />
+        <input type="text" name="clientAddress" placeholder="Endereço" />
+        <input type="text" name="clientComplement" placeholder="Complemento"/>
+        <input type="text" name="clientNote" placeholder="Observações (opcional)"/>
+        <div class="form_buttons">
+          <button type="submit" formaction="/proc_cliente" formmethod="get" class="addItem">Procurar Cliente</button>
+          <button type="submit" class="addItem">Adicione um cliente</button>
+        </div>
+      </form>
+
+      <table class="display_table">
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>CPF</th>
+            <th>Telefone</th>
+            <th>Observações</th>
+            <th>Excluir</th>
+          </tr>
+        </thead>
+        <tbody id="client-list">
+          {% for row in rows %}
+          <tr>
+            {% for item in row %}
+              <td>{{ item }}</td>
+            {% endfor %}
+              <td class="dltitem-btn"><form method="POST" action="/dlt_cliente">
+                <input type="hidden" name="codigo" value="{{ row[1] }}">
+                  <button type="submit" class="delete-btn">X</button>
+                  </form>                    
+              </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  </div>
+{% endblock %}

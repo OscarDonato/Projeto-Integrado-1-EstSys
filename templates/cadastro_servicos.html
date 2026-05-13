@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block itensmenu %}
+  <li><a href="/cadastro_produtos">PRODUTOS</a></li>
+  <li><a href="/cadastro_clientes">CLIENTES</a></li>
+  <li><a href="/cadastro_servicos">SERVIÇOS</a></li>
+{% endblock %}
+
+{% block content %}
+      <div class="cad">
+        <section id="services">
+          <h2>SERVIÇOS</h2>
+          <form id="serviceForm" class="formul" method="POST" action="/add_servico">
+            <input type="text" name="srvID" placeholder="Somente para busca - ID do serviço" />
+            <input type="text" name="serviceName" placeholder="Nome do serviço" />
+            <input
+              type="text"
+              name="serviceDesc"
+              placeholder="Descrição do serviço"
+            />
+            <input
+              type="number"
+              name="servicePrice"
+              placeholder="Preço"
+              step="0.01"
+            />
+
+            <div class="form_buttons">
+              <button type="submit" formaction="/proc_srv" formmethod="get" class="addItem">Procurar Serviço</button>
+              <button type="submit" class="addItem">Adicione um Serviço</button>
+            </div>
+          </form>
+
+          <table class="display_table">
+            <thead>
+              <tr>
+                <th class="item">ID</th>
+                <th class="item">Nome</th>
+                <th class="item">Preço</th>
+                <th class="item">Descrição</th>
+                <th class="item">Excluir</th>
+              </tr>
+            </thead>
+            
+            <tbody id="service-list">
+              {% for row in rows %}
+              <tr>
+                {% for item in row %}
+                  <td>{{ item }}</td>
+                {% endfor %}
+                <td class="dltitem-btn">
+                    <form method="POST" action="/dlt_servico">
+                      <input type="hidden" name="codigo" value="{{ row[0] }}">
+                      <button type="submit" class="delete-btn">X</button>
+                    </form>                    
+                  </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </section>
+      </div>
+{% endblock %}

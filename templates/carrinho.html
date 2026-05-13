@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block itensmenu %}
+        <button class="addItem" id="toggleSidebarBtn">Buscar Produto/Serviço</button>
+{% endblock %}
+
+{% block content %}
+  <div class="cad">
+    <section id="products">
+      <h2>Carrinho<br /></h2>
+      <h3>Cliente: {{ cli_nome }}</h3>
+
+      <table id="cart_lista" class="cart-table">
+        <thead>
+          <tr>
+            <th class="item">Item</th>
+            <th class="item">Nome</th>
+            <th class="item">Descrição</th>
+            <th class="item">Preço</th>
+            <th class="item">Quantidade</th>
+            <th class="item">Excluir</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for row in rows %}
+            <tr>
+              {% for item in row %}
+                <td class="spec"><p>{{ item }}</p></td>
+              {% endfor %}
+                <td class="spec"><input id="{{ row[1] | replace(' ', '_') }}_qt" class="ct-input" type="number" step="1" min="1"></td>
+                <td class="spec">
+                  <form method="POST" action="/dlt_item_cart">
+                    <input type="hidden" name="nome" value="{{ row[1] }}">
+                    <button type="submit" class="delete-btn">X</button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tr>
+        </tbody>
+      </table>
+      <form id="finalizarVenda" action="/submit_carrinho" method="POST">
+        <button type="button" onclick="getQts()" class="addItem">Finalizar Venda</button>
+      </form>  
+    </section>
+  </div>
+    
+  <div class="sidebar" id="sidebar">
+    <button class="close-btn">X</button>
+    <div class="busca-cart"><h2>Buscar</h2>
+
+    <select id="tipoItem" class="select_prdsrv">
+      <option value="produto">Produto</option>
+      <option value="servico">Serviço</option>
+    </select></div>
+
+    <input type="text" id="buscaTexto" placeholder="Digite o nome ou código" />
+    <button onclick="buscarItem()" class="buscar-item">Buscar</button>
+
+    <div id="resultadoBusca">
+      <!-- Resultados de busca aparecerão aqui -->
+    </div>
+
+    <button id="lupa" class="lupa">
+          <i class="bi bi-search"></i>
+    </button>
+
+    <div class="table_container">
+      <table class="display_table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>NOME</th>
+            <th>DESCRIÇÃO</th>
+            <th>ADD</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Preenchido dinamicamente por buscarItem() -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="overlay" class="overlay"></div>
+
+{% endblock %}
