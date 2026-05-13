@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estsys Estoque</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        header {
+            background-color: #333;
+            color: white;
+            padding: 15px;
+        }
+        nav ul {
+            list-style: none;
+            padding: 0;
+        }
+        nav ul li {
+            display: inline;
+            margin: 10px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            font-size: 18px;
+            color: #333;
+        }
+        section {
+            background-color: #ccc;
+            margin: 20px auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        button {
+            padding: 10px;
+            background-color: #444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Estsys Estoque</h1>
+    </header>
+    <nav>
+        <ul>
+            <li><a href="#products">Products</a></li>
+            <li><a href="#clients">Clients</a></li>
+            <li><a href="#services">Services</a></li>
+        </ul>
+    </nav>
+    
+    <section id="products">
+        <h2>Products</h2>
+        <input type="text" id="productName" placeholder="Product Name">
+        <input type="number" id="productPrice" placeholder="Price" step="0.01">
+        <button onclick="addProduct()">Add Product</button>
+        <table>
+            <tr>
+                <th>Name</th>
+                <th>Price (BRL)</th>
+            </tr>
+            <tbody id="product-list"></tbody>
+        </table>
+    </section>
+    
+    <section id="clients">
+        <h2>Clients</h2>
+        <input type="text" id="clientName" placeholder="Client Name">
+        <input type="text" id="clientCPF" placeholder="CPF (xxx.xxx.xxx-xx)" maxlength="14">
+        <input type="text" id="clientPhone" placeholder="Phone (xx) xxxxx-xxxx" maxlength="15">
+        <button onclick="addClient()">Add Client</button>
+        <ul id="client-list"></ul>
+    </section>
+    
+    <section id="services">
+        <h2>Services</h2>
+        <input type="text" id="serviceName" placeholder="Service Name">
+        <input type="number" id="servicePrice" placeholder="Price" step="0.01">
+        <button onclick="addService()">Add Service</button>
+        <ul id="service-list"></ul>
+    </section>
+    
+    <script>
+        function addProduct() {
+            const name = document.getElementById('productName').value;
+            const price = parseFloat(document.getElementById('productPrice').value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            if (name && price) {
+                const row = `<tr><td>${name}</td><td>${price}</td></tr>`;
+                document.getElementById('product-list').innerHTML += row;
+            }
+        }
+        
+        function addClient() {
+            const name = document.getElementById('clientName').value;
+            let cpf = document.getElementById('clientCPF').value.replace(/\D/g, '');
+            cpf = cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+            let phone = document.getElementById('clientPhone').value.replace(/\D/g, '');
+            phone = phone.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            if (name && cpf && phone) {
+                const listItem = `<li>${name} - CPF: ${cpf} - Phone: ${phone}</li>`;
+                document.getElementById('client-list').innerHTML += listItem;
+            }
+        }
+        
+        function addService() {
+            const name = document.getElementById('serviceName').value;
+            const price = parseFloat(document.getElementById('servicePrice').value).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+            if (name && price) {
+                const listItem = `<li>${name} - Price: ${price}</li>`;
+                document.getElementById('service-list').innerHTML += listItem;
+            }
+        }
+    </script>
+</body>
+</html>
