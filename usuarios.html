@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Usuários</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 40px;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .back-link:hover { text-decoration: underline; }
+        h1 { margin-top: 0; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td { border: 1px solid #ccc; }
+        th, td { padding: 12px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .btn {
+            padding: 8px 12px;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-add { background-color: #28a745; margin-bottom: 15px; }
+        .btn-edit { background-color: #ffc107; color: #333; margin-right: 5px;}
+        .btn-delete { background-color: #dc3545; }
+        .btn:hover { opacity: 0.8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('configuracoes') }}" class="back-link">&larr; Voltar para Configurações</a>
+        <h1>Cadastro de Usuários</h1>
+        <p>Gerenciamento dos usuários do sistema e suas permissões associadas.</p>
+
+        <a href="#" class="btn btn-add">+ Novo Usuário</a>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>E-mail</th>
+                    <th>Grupo</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Estrutura de exemplo (pode ser iterada com Jinja2 na aplicação final) -->
+                <tr>
+                    <td>1</td>
+                    <td>João Silva</td>
+                    <td>joao@estetsys.com.br</td>
+                    <td>Administrador</td>
+                    <td>
+                        <button class="btn btn-edit">Alterar</button>
+                        <button class="btn btn-delete">Remover</button>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Maria Souza</td>
+                    <td>maria@estetsys.com.br</td>
+                    <td>Vendedor</td>
+                    <td>
+                        <button class="btn btn-edit">Alterar</button>
+                        <button class="btn btn-delete">Remover</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

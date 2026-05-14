@@ -7,9 +7,10 @@
 {% block content %}
   <div class="cad-login">
     <section id="password">
-      <h2>INSIRA A SENHA<br /></h2>
+      <h2>INFORME USUÁRIO E SENHA<br /></h2>
       <form action="/ver_login" method="POST">
-        <input type="password" name="senha" placeholder="Senha do sistema">
+        <input type="text" name="usuario" placeholder="Usuário do sistema" value="admin">
+        <input type="password" name="senha" placeholder="Senha do sistema" value="1234">
         <button type="submit" class="addItem" formaction="/ver_login" formmethod="POST">ENTRAR</button>
       </form>
     </section>

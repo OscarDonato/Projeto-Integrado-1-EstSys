@@ -1,6 +1,9 @@
 from flask import Flask, request, redirect, url_for, jsonify, render_template, session
 from flask_cors import CORS
 import psycopg2
+import os
+import json
+from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
@@ -8,7 +11,25 @@ CORS(app)
 app.secret_key = '19i320od$'
 global login_key
 login_key = 'G15estetsys'
+global TipConDB
+TipConDB = 2 # 1 = Aplicação/Memória, 2 = DB Postgre
 # teste commit
+
+DB_FILE = os.path.join(os.path.dirname(__file__), 'DBAplication', 'database.json')
+
+def save_json_db(data):
+    with open(DB_FILE, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+def load_json_db():
+    if not os.path.exists(DB_FILE):
+        os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
+        default_data = {'cliente': [], 'produto': [], 'servico': [], 'vendas': []}
+        save_json_db(default_data)
+        return default_data
+    with open(DB_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
+
 # Rotas das páginas
 
 DB_HOST = "localhost"
@@ -57,6 +78,20 @@ def index():
     else:
         return render_template('index.html')
 
+@app.route('/configuracoes', methods=['GET', 'POST'])
+def configuracoes():
+    global TipConDB
+    if valid_login() == False:
+        return redirect(url_for("login"))
+        
+    if request.method == 'POST':
+        try:
+            TipConDB = int(request.form.get('tipcondb'))
+        except (ValueError, TypeError):
+            pass
+            
+    return render_template('configuracoes.html', TipConDB=TipConDB)
+
 @app.route('/cadastro_clientes')
 def dir_cadastro_clientes():
     if valid_login() == False:
@@ -80,14 +115,22 @@ def dir_cadastro_servicos():
 
 @app.route('/vendas')
 def dir_vendas():
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT VND_CODIGO, VND_NOMECLI, VND_DOC, VND_NOMEPRD, VND_TOTAL, TO_CHAR(VND_DATA, 'YYYY-MM-DD HH24:MI') FROM VENDAS WHERE d_e_l_e_t_ IS NULL ORDER BY VND_DATA DESC;")
-    vendas = cur.fetchall()
-
-    cur.close()
-    conn.close()
+    if TipConDB == 1:
+        db = load_json_db()
+        vendas = []
+        for v in db.get('vendas', []):
+            if v.get('D_E_L_E_T_') is None:
+                vendas.append((v.get('VND_CODIGO'), v.get('VND_NOMECLI'), v.get('VND_DOC'), v.get('VND_NOMEPRD'), v.get('VND_TOTAL'), v.get('VND_DATA', '')))
+        vendas.sort(key=lambda x: x[5] if x[5] else '', reverse=True)
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+        cur.execute("SELECT VND_CODIGO, VND_NOMECLI, VND_DOC, VND_NOMEPRD, VND_TOTAL, TO_CHAR(VND_DATA, 'YYYY-MM-DD HH24:MI') FROM VENDAS WHERE d_e_l_e_t_ IS NULL ORDER BY VND_DATA DESC;")
+        vendas = cur.fetchall()
+    
+        cur.close()
+        conn.close()
 
     if valid_login() == False:
         return redirect(url_for("login"))
@@ -105,6 +148,10 @@ def dir_vendas():
 # Função para determinar o CLI_CODIGO MÁXIMO
 
 def max_cli_cod():
+    if TipConDB == 1:
+        db = load_json_db()
+        return max([item.get('CLI_CODIGO', 0) for item in db.get('cliente', [])], default=0)
+
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT MAX(CLI_CODIGO) FROM CLIENTE;")
@@ -138,33 +185,50 @@ def add_cliente():
         else:
             return render_template("cadastro_clientes.html", alert="Dados incompletos", rows=[])
     
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    try:
-        # Chamando a procedure de inclusão de dados na tabela de cadastro de produtos
-        # cur.callproc( 'add_cliente', ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
-        
-        # Utilizar o comando abaixo enquanto a procedure não é consertada
-        cur.execute( "Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_COMPLEMENT, CLI_CEP, CLI_TEL, CLI_DOC, CLI_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);", ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
-        conn.commit()
+    if TipConDB == 1:
+        db = load_json_db()
+        novo_cliente = {
+            'CLI_CODIGO': ad_CLI_CODIGO,
+            'CLI_NOME': ad_CLI_NOME,
+            'CLI_ENDERECO': ad_CLI_ENDERECO,
+            'CLI_COMPLEMENT': ad_CLI_COMPLEMENT,
+            'CLI_CEP': ad_CLI_CEP,
+            'CLI_TEL': ad_CLI_TEL,
+            'CLI_DOC': ad_CLI_DOC,
+            'CLI_OBSERVA': ad_CLI_OBSERVA,
+            'D_E_L_E_T_': None
+        }
+        db.setdefault('cliente', []).append(novo_cliente)
+        save_json_db(db)
         rows = [(ad_CLI_NOME, ad_CLI_DOC, ad_CLI_TEL, ad_CLI_OBSERVA)]
         
         if valid_login() == False:
             return redirect(url_for("login"))
         else:
             return render_template("cadastro_clientes.html", alert=f"Cliente adicionado com sucesso!",rows=rows)
-    
-    except Exception as e:
-        conn.rollback()
-
-        if valid_login() == False:
-            return redirect(url_for("login"))
-        else:
-            return render_template("cadastro_clientes.html", alert=f"Erro ao cadastrar: {str(e)}")
-    finally:
-        cur.close()
-        conn.close()
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        try:
+            cur.execute( "Insert Into CLIENTE ( CLI_CODIGO, CLI_NOME, CLI_ENDERECO, CLI_COMPLEMENT, CLI_CEP, CLI_TEL, CLI_DOC, CLI_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);", ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_COMPLEMENT, ad_CLI_CEP, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
+            conn.commit()
+            rows = [(ad_CLI_NOME, ad_CLI_DOC, ad_CLI_TEL, ad_CLI_OBSERVA)]
+            
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_clientes.html", alert=f"Cliente adicionado com sucesso!",rows=rows)
+        
+        except Exception as e:
+            conn.rollback()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_clientes.html", alert=f"Erro ao cadastrar: {str(e)}")
+        finally:
+            cur.close()
+            conn.close()
     
     
 
@@ -174,31 +238,46 @@ def dlt_cliente():
     codigo = request.form.get('codigo')
     codigo = str(codigo)
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute("UPDATE CLIENTE SET D_E_L_E_T_ = %s WHERE CLI_DOC = %s;", ('*', codigo))
-        conn.commit()
-
+    if TipConDB == 1:
+        db = load_json_db()
+        for c in db.get('cliente', []):
+            if c.get('CLI_DOC') == codigo:
+                c['D_E_L_E_T_'] = '*'
+        save_json_db(db)
         if valid_login() == False:
             return redirect(url_for("login"))
         else:
             return render_template("cadastro_clientes.html", alert = "Cliente excluído com sucesso")
-
-    except Exception as e:
-        conn.rollback()
-        if valid_login() == False:
-            return redirect(url_for("login"))
-        else:
-            return render_template("cadastro_clientes.html",alert = f"Erro ao excluir cliente: {e}")
-    finally:
-        cur.close()
-        conn.close()
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+        try:
+            cur.execute("UPDATE CLIENTE SET D_E_L_E_T_ = %s WHERE CLI_DOC = %s;", ('*', codigo))
+            conn.commit()
+    
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_clientes.html", alert = "Cliente excluído com sucesso")
+    
+        except Exception as e:
+            conn.rollback()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_clientes.html",alert = f"Erro ao excluir cliente: {e}")
+        finally:
+            cur.close()
+            conn.close()
 
 ########################    Seção de Produtos   ########################
 
 def max_prd_cod():
+    if TipConDB == 1:
+        db = load_json_db()
+        return max([item.get('PRD_CODIGO', 0) for item in db.get('produto', [])], default=0)
+
     conn = get_db_connection()
     cur = conn.cursor()
     cur.execute("SELECT MAX(PRD_CODIGO) FROM PRODUTO;")
@@ -227,30 +306,43 @@ def add_produto():
         else:
             return render_template("cadastro_produtos.html", alert="Dados incompletos", rows=[])
     
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    try:
-        # Chamando a procedure de inclusão de dados na tabela de cadastro de produtos
-        # cur.callproc( 'add_cliente', ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
-        
-        # Utilizar o comando abaixo enquanto a procedure não é consertada
-        cur.execute( "Insert Into PRODUTO ( PRD_CODIGO, PRD_NOME, PRD_PRECO, PRD_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, NULL, 1, NULL);", ( ad_PRD_CODIGO, ad_PRD_NOME, ad_PRD_PRECO, ad_PRD_OBSERVA))
-        conn.commit()
+    if TipConDB == 1:
+        db = load_json_db()
+        novo_produto = {
+            'PRD_CODIGO': ad_PRD_CODIGO,
+            'PRD_NOME': ad_PRD_NOME,
+            'PRD_PRECO': ad_PRD_PRECO,
+            'PRD_OBSERVA': ad_PRD_OBSERVA,
+            'D_E_L_E_T_': None
+        }
+        db.setdefault('produto', []).append(novo_produto)
+        save_json_db(db)
         rows = [(ad_PRD_CODIGO, ad_PRD_NOME, ad_PRD_PRECO, ad_PRD_OBSERVA)]
-        
         if valid_login() == False:
             return redirect(url_for("login"))
         else:
             return render_template("cadastro_produtos.html", alert="Produto adicionado com sucesso!", rows=rows)
-
-    except Exception as e:
-        conn.rollback()
-        render_template("cadastro_produtos.html", alert=f"Erro ao cadastrar: {str(e)}")
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        try:
+            cur.execute( "Insert Into PRODUTO ( PRD_CODIGO, PRD_NOME, PRD_PRECO, PRD_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, NULL, 1, NULL);", ( ad_PRD_CODIGO, ad_PRD_NOME, ad_PRD_PRECO, ad_PRD_OBSERVA))
+            conn.commit()
+            rows = [(ad_PRD_CODIGO, ad_PRD_NOME, ad_PRD_PRECO, ad_PRD_OBSERVA)]
+            
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_produtos.html", alert="Produto adicionado com sucesso!", rows=rows)
     
-    finally:
-        cur.close()
-        conn.close()
+        except Exception as e:
+            conn.rollback()
+            return render_template("cadastro_produtos.html", alert=f"Erro ao cadastrar: {str(e)}")
+        
+        finally:
+            cur.close()
+            conn.close()
     
     
 
@@ -259,32 +351,47 @@ def add_produto():
 def dlt_produto():
     codigo = request.form.get('codigo')
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute("UPDATE PRODUTO SET D_E_L_E_T_ = %s WHERE PRD_CODIGO = %s;", ('*', codigo))
-        conn.commit()
-        
+    if TipConDB == 1:
+        db = load_json_db()
+        for p in db.get('produto', []):
+            if str(p.get('PRD_CODIGO')) == str(codigo):
+                p['D_E_L_E_T_'] = '*'
+        save_json_db(db)
         if valid_login() == False:
             return redirect(url_for("login"))
         else:
             return render_template("cadastro_produtos.html", alert = "Produto excluído com sucesso")
-
-    except Exception as e:
-        conn.rollback()
-        if valid_login() == False:
-            return redirect(url_for("login"))
-        else:
-            return render_template("cadastro_produtos.html",alert = f"Erro ao excluir produto: {e}")
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
     
-    finally:
-        cur.close()
-        conn.close()
+        try:
+            cur.execute("UPDATE PRODUTO SET D_E_L_E_T_ = %s WHERE PRD_CODIGO = %s;", ('*', codigo))
+            conn.commit()
+            
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_produtos.html", alert = "Produto excluído com sucesso")
+    
+        except Exception as e:
+            conn.rollback()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_produtos.html",alert = f"Erro ao excluir produto: {e}")
+        
+        finally:
+            cur.close()
+            conn.close()
 
 ########################    Seção de Serviços   ########################
 
 def max_srv_cod():
+    if TipConDB == 1:
+        db = load_json_db()
+        return max([item.get('SRV_CODIGO', 0) for item in db.get('servico', [])], default=0)
+
     conn = get_db_connection()
     cur = conn.cursor()
 
@@ -313,60 +420,84 @@ def add_servico():
         else:
             return render_template("cadastro_servicos.html", alert="Dados incompletos", rows=[])
     
-    conn = get_db_connection()
-    cur = conn.cursor()
-    
-    try:
-        # Chamando a procedure de inclusão de dados na tabela de cadastro de produtos
-        # cur.callproc( 'add_cliente', ( ad_CLI_CODIGO, ad_CLI_NOME, ad_CLI_ENDERECO, ad_CLI_TEL, ad_CLI_DOC, ad_CLI_OBSERVA ))
-        
-        # Utilizar o comando abaixo enquanto a procedure não é consertada
-        cur.execute( "Insert Into SERVICO ( SRV_CODIGO, SRV_NOME, SRV_PRECO, SRV_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, NULL, 1, NULL);", ( ad_SRV_CODIGO, ad_SRV_NOME, ad_SRV_PRECO, ad_SRV_OBSERVA))
-        conn.commit()
+    if TipConDB == 1:
+        db = load_json_db()
+        novo_servico = {
+            'SRV_CODIGO': ad_SRV_CODIGO,
+            'SRV_NOME': ad_SRV_NOME,
+            'SRV_PRECO': ad_SRV_PRECO,
+            'SRV_OBSERVA': ad_SRV_OBSERVA,
+            'D_E_L_E_T_': None
+        }
+        db.setdefault('servico', []).append(novo_servico)
+        save_json_db(db)
         rows = [(ad_SRV_CODIGO, ad_SRV_NOME, ad_SRV_PRECO, ad_SRV_OBSERVA)]
-        
         if valid_login() == False:
             return redirect(url_for("login"))
         else:
             return render_template("cadastro_servicos.html", alert="Serviço adicionado com sucesso!", rows=rows)
-
-    except Exception as e:
-        conn.rollback()
-        if valid_login() == False:
-            return redirect(url_for("login"))
-        else:
-            return render_template("cadastro_servicos.html", alert=f"Erro ao cadastrar: {str(e)}")
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        try:
+            cur.execute( "Insert Into SERVICO ( SRV_CODIGO, SRV_NOME, SRV_PRECO, SRV_OBSERVA, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, NULL, 1, NULL);", ( ad_SRV_CODIGO, ad_SRV_NOME, ad_SRV_PRECO, ad_SRV_OBSERVA))
+            conn.commit()
+            rows = [(ad_SRV_CODIGO, ad_SRV_NOME, ad_SRV_PRECO, ad_SRV_OBSERVA)]
+            
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_servicos.html", alert="Serviço adicionado com sucesso!", rows=rows)
     
-    finally:
-        cur.close()
-        conn.close()
+        except Exception as e:
+            conn.rollback()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_servicos.html", alert=f"Erro ao cadastrar: {str(e)}")
+        
+        finally:
+            cur.close()
+            conn.close()
 
 @app.route('/dlt_servico', methods=['POST'])
 def dlt_servico():
     codigo = request.form.get('codigo')
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute("UPDATE SERVICO SET D_E_L_E_T_ = %s WHERE SRV_CODIGO = %s;", ('*', codigo))
-        conn.commit()
-
+    if TipConDB == 1:
+        db = load_json_db()
+        for s in db.get('servico', []):
+            if str(s.get('SRV_CODIGO')) == str(codigo):
+                s['D_E_L_E_T_'] = '*'
+        save_json_db(db)
         if valid_login() == False:
             return redirect(url_for("login"))
         else:
             return render_template("cadastro_servicos.html", alert = "Servico excluído com sucesso")
-
-    except Exception as e:
-        conn.rollback()
-        if valid_login() == False:
-            return redirect(url_for("login"))
-        else:
-            return render_template("cadastro_servicos.html",alert = f"Erro ao excluir produto: {e}")
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
     
-    finally:
-        cur.close()
-        conn.close()
+        try:
+            cur.execute("UPDATE SERVICO SET D_E_L_E_T_ = %s WHERE SRV_CODIGO = %s;", ('*', codigo))
+            conn.commit()
+    
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_servicos.html", alert = "Servico excluído com sucesso")
+    
+        except Exception as e:
+            conn.rollback()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_servicos.html",alert = f"Erro ao excluir produto: {e}")
+        
+        finally:
+            cur.close()
+            conn.close()
         
 ##################################################################################################################################################
 ##################################################################################################################################################
@@ -382,43 +513,63 @@ def proc_cliente():
     DOC   = data.get('clientCPF', '').strip()
     NOME     = data.get('clientName', '').strip()
     TEL      = data.get('clientPhone', '').strip()
-    src = 'SELECT CLI_NOME AS NOME, CLI_DOC AS DOCUMENTO, CLI_TEL AS TELEFONE, CLI_OBSERVA AS OBSERVAÇÕES FROM CLIENTE WHERE D_E_L_E_T_ IS NULL'
-    # FORMATA PARA BUSCA PARCIAL
-
-    if DOC:
-        src += f" AND CLI_DOC ILIKE \'%{DOC}%\'"
     
-    if NOME:
-        src += f" AND CLI_NOME ILIKE \'%{NOME}%\'"
-    
-    if TEL:
-        src += f" AND CLI_TEL ILIKE \'%{TEL}%\'"
-    
-    src += ' ORDER BY CLI_NOME ASC;'
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-
-    try:
-        cur.execute(src)
-        rows = cur.fetchall()
-
+    if TipConDB == 1:
+        db = load_json_db()
+        rows = []
+        for c in db.get('cliente', []):
+            if c.get('D_E_L_E_T_') is None:
+                match = True
+                if DOC and DOC.lower() not in c.get('CLI_DOC', '').lower(): match = False
+                if NOME and NOME.lower() not in c.get('CLI_NOME', '').lower(): match = False
+                if TEL and TEL.lower() not in c.get('CLI_TEL', '').lower(): match = False
+                if match:
+                    rows.append((c.get('CLI_NOME'), c.get('CLI_DOC'), c.get('CLI_TEL'), c.get('CLI_OBSERVA')))
+        rows.sort(key=lambda x: x[0] if x[0] else '')
         if valid_login() == False:
             return redirect(url_for("login"))
         else:
             return render_template("cadastro_clientes.html", rows=rows, alert = "Clientes encontrados!")
+    else:
+        src = "SELECT CLI_NOME AS NOME, CLI_DOC AS DOCUMENTO, CLI_TEL AS TELEFONE, CLI_OBSERVA AS OBSERVAÇÕES FROM CLIENTE WHERE D_E_L_E_T_ IS NULL"
+        params = []
     
-    except:
-        mensagem = 'Cliente não encontrado!'
-        if valid_login() == False:
-            return redirect(url_for("login"))
-        else:
-            return redirect(url_for(dir_cadastro_clientes))
-
-    finally:
-        cur.close()
-        conn.close()
+        if DOC:
+            src += " AND CLI_DOC ILIKE %s"
+            params.append(f"%{DOC}%")
+        
+        if NOME:
+            src += " AND CLI_NOME ILIKE %s"
+            params.append(f"%{NOME}%")
+        
+        if TEL:
+            src += " AND CLI_TEL ILIKE %s"
+            params.append(f"%{TEL}%")
+        
+        src += ' ORDER BY CLI_NOME ASC;'
+    
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+        try:
+            cur.execute(src, tuple(params))
+            rows = cur.fetchall()
+    
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_clientes.html", rows=rows, alert = "Clientes encontrados!")
+        
+        except:
+            mensagem = 'Cliente não encontrado!'
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return redirect(url_for('dir_cadastro_clientes'))
+    
+        finally:
+            cur.close()
+            conn.close()
 
 @app.route('/proc_prd', methods=["GET"])
 def proc_produto():
@@ -426,36 +577,54 @@ def proc_produto():
     CODIGO   = data.get('productID', '').strip()
     NOME     = data.get('productName', '').strip()
     OBSERVA  = data.get('productDesc', '').strip()
-    src = 'SELECT PRD_CODIGO AS Código, PRD_NOME AS Nome, PRD_PRECO AS Preço, PRD_OBSERVA AS DESCRIÇÃO FROM PRODUTO WHERE D_E_L_E_T_ IS NULL'
 
-    # FORMATA PARA BUSCA PARCIAL
-    if CODIGO:
-        src += f" AND PRD_CODIGO = {CODIGO}"
+    if TipConDB == 1:
+        db = load_json_db()
+        rows = []
+        for p in db.get('produto', []):
+            if p.get('D_E_L_E_T_') is None:
+                match = True
+                if CODIGO and str(p.get('PRD_CODIGO', '')) != CODIGO: match = False
+                if NOME and NOME.lower() not in str(p.get('PRD_NOME', '')).lower(): match = False
+                if OBSERVA and OBSERVA.lower() not in str(p.get('PRD_OBSERVA', '')).lower(): match = False
+                if match:
+                    rows.append((p.get('PRD_CODIGO'), p.get('PRD_NOME'), p.get('PRD_PRECO'), p.get('PRD_OBSERVA')))
+        rows.sort(key=lambda x: str(x[1]) if x[1] else '')
+        return render_template("cadastro_produtos.html", rows=rows)
+    else:
+        src = 'SELECT PRD_CODIGO AS Código, PRD_NOME AS Nome, PRD_PRECO AS Preço, PRD_OBSERVA AS DESCRIÇÃO FROM PRODUTO WHERE D_E_L_E_T_ IS NULL'
+        params = []
     
-    if NOME:
-        src += f" AND PRD_NOME ILIKE \'%{NOME}%\'"
+        # FORMATA PARA BUSCA PARCIAL
+        if CODIGO:
+            src += " AND PRD_CODIGO = %s"
+            params.append(CODIGO)
+        
+        if NOME:
+            src += " AND PRD_NOME ILIKE %s"
+            params.append(f"%{NOME}%")
+        
+        if OBSERVA:
+            src += " AND PRD_OBSERVA ILIKE %s"
+            params.append(f"%{OBSERVA}%")
     
-    if OBSERVA:
-        src += f" AND PRD_OBSERVA ILIKE \'%{OBSERVA}%\'"
-
-    src += ' ORDER BY PRD_NOME ASC;'
-
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute(src)
-        rows = cur.fetchall()
-
-    except:
-        mensagem = 'Produto não encontrado!'
-        return redirect(url_for(dir_cadastro_produtos))
-
-    cur.close()
-    conn.close()
-
-    return render_template("cadastro_produtos.html", rows=rows)
+        src += ' ORDER BY PRD_NOME ASC;'
+    
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+        try:
+            cur.execute(src, tuple(params))
+            rows = cur.fetchall()
+    
+        except:
+            mensagem = 'Produto não encontrado!'
+            return redirect(url_for('dir_cadastro_produtos'))
+    
+        cur.close()
+        conn.close()
+    
+        return render_template("cadastro_produtos.html", rows=rows)
  
 @app.route('/proc_srv', methods=["GET"])
 def proc_service():
@@ -465,43 +634,64 @@ def proc_service():
     SRV_NOME     = data.get('serviceName', '').strip()
     SRV_OBSERVA      = data.get('serviceDesc', '').strip()
     
-    # FORMATA PARA BUSCA PARCIAL
-    src = "SELECT SRV_CODIGO, SRV_NOME, SRV_PRECO, SRV_OBSERVA FROM SERVICO WHERE D_E_L_E_T_ IS NULL"
-
-    if SRV_CODIGO:
-        src += f" AND SRV_CODIGO = {SRV_CODIGO}"
-
-    if SRV_NOME:
-        src += f" AND SRV_NOME ILIKE \'{SRV_NOME}\'"
-    
-    if SRV_OBSERVA:
-        src += f" AND SRV_OBSERVA ILIKE \'{SRV_OBSERVA}\'"
-    
-    src += " ORDER BY SRV_NOME ASC"
-
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute(src)
-        rows = cur.fetchall()
-
+    if TipConDB == 1:
+        db = load_json_db()
+        rows = []
+        for s in db.get('servico', []):
+            if s.get('D_E_L_E_T_') is None:
+                match = True
+                if SRV_CODIGO and str(s.get('SRV_CODIGO', '')) != SRV_CODIGO: match = False
+                if SRV_NOME and SRV_NOME.lower() not in str(s.get('SRV_NOME', '')).lower(): match = False
+                if SRV_OBSERVA and SRV_OBSERVA.lower() not in str(s.get('SRV_OBSERVA', '')).lower(): match = False
+                if match:
+                    rows.append((s.get('SRV_CODIGO'), s.get('SRV_NOME'), s.get('SRV_PRECO'), s.get('SRV_OBSERVA')))
+        rows.sort(key=lambda x: str(x[1]) if x[1] else '')
         if valid_login() == False:
             return redirect(url_for("login"))
         else:
             return render_template("cadastro_servicos.html", rows = rows)
-
-    except Exception as e:
-        conn.rollback()
+    else:
+        # FORMATA PARA BUSCA PARCIAL
+        src = "SELECT SRV_CODIGO, SRV_NOME, SRV_PRECO, SRV_OBSERVA FROM SERVICO WHERE D_E_L_E_T_ IS NULL"
+        params = []
+    
+        if SRV_CODIGO:
+            src += " AND SRV_CODIGO = %s"
+            params.append(SRV_CODIGO)
+    
+        if SRV_NOME:
+            src += " AND SRV_NOME ILIKE %s"
+            params.append(f"%{SRV_NOME}%")
         
-        if valid_login() == False:
-            return redirect(url_for("login"))
-        else:
-            return render_template("cadastro_servicos.html", alert = f"Erro ao buscar serviço: {e}")
+        if SRV_OBSERVA:
+            src += " AND SRV_OBSERVA ILIKE %s"
+            params.append(f"%{SRV_OBSERVA}%")
+        
+        src += " ORDER BY SRV_NOME ASC"
+    
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+        try:
+            cur.execute(src, tuple(params))
+            rows = cur.fetchall()
+    
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_servicos.html", rows = rows)
+    
+        except Exception as e:
+            conn.rollback()
             
-    finally:
-        cur.close()
-        conn.close()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("cadastro_servicos.html", alert = f"Erro ao buscar serviço: {e}")
+                
+        finally:
+            cur.close()
+            conn.close()
 
 ####################################################################
 ############################# ROTAS PARA VENDA #####################
@@ -510,14 +700,22 @@ def proc_service():
 def buscar_cliente():
     cpf = request.args.get("cpf", "").strip()
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT CLI_DOC, CLI_NOME, CLI_TEL, CLI_CODIGO FROM CLIENTE WHERE D_E_L_E_T_ IS NULL AND CLI_DOC ILIKE %s LIMIT 1", (f"%{cpf}%",))
-    resultado = cur.fetchone()
+    if TipConDB == 1:
+        db = load_json_db()
+        resultado = None
+        for c in db.get('cliente', []):
+            if c.get('D_E_L_E_T_') is None and cpf.lower() in str(c.get('CLI_DOC', '')).lower():
+                resultado = (c.get('CLI_DOC'), c.get('CLI_NOME'), c.get('CLI_TEL'), c.get('CLI_CODIGO'))
+                break
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
     
-    cur.close()
-    conn.close()
+        cur.execute("SELECT CLI_DOC, CLI_NOME, CLI_TEL, CLI_CODIGO FROM CLIENTE WHERE D_E_L_E_T_ IS NULL AND CLI_DOC ILIKE %s LIMIT 1", (f"%{cpf}%",))
+        resultado = cur.fetchone()
+        
+        cur.close()
+        conn.close()
 
     if resultado:
         doc   = resultado[0]
@@ -550,22 +748,46 @@ def buscar_item():
         else:
             return jsonify({'erro': 'Tipo inválido'}), 400
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    if tipo == 'produto':
-        cur.execute("SELECT PRD_CODIGO AS id, PRD_NOME AS nome, PRD_OBSERVA AS observa, PRD_PRECO AS preco FROM produto WHERE PRD_NOME ILIKE %s OR PRD_CODIGO::text ILIKE %s",
-                    (f"%{termo}%", f"%{termo}%"))
+    if TipConDB == 1:
+        db = load_json_db()
+        dados = []
+        if tipo == 'produto':
+            for p in db.get('produto', []):
+                if p.get('D_E_L_E_T_') is None:
+                    if termo.lower() in str(p.get('PRD_NOME', '')).lower() or termo.lower() in str(p.get('PRD_CODIGO', '')).lower():
+                        dados.append({
+                            'id': p.get('PRD_CODIGO'),
+                            'nome': p.get('PRD_NOME'),
+                            'observa': p.get('PRD_OBSERVA'),
+                            'preco': p.get('PRD_PRECO')
+                        })
+        else:
+            for s in db.get('servico', []):
+                if s.get('D_E_L_E_T_') is None:
+                    if termo.lower() in str(s.get('SRV_NOME', '')).lower() or termo.lower() in str(s.get('SRV_CODIGO', '')).lower():
+                        dados.append({
+                            'id': s.get('SRV_CODIGO'),
+                            'nome': s.get('SRV_NOME'),
+                            'observa': s.get('SRV_OBSERVA'),
+                            'preco': s.get('SRV_PRECO')
+                        })
     else:
-        cur.execute("SELECT SRV_CODIGO AS id, SRV_NOME AS nome, SRV_OBSERVA AS observa, SRV_PRECO AS preco FROM servico WHERE SRV_NOME ILIKE %s OR SRV_CODIGO::text ILIKE %s",
-                    (f"%{termo}%", f"%{termo}%"))
-
-    resultados = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    colnames = [desc[0] for desc in cur.description]
-    dados = [dict(zip(colnames, row)) for row in resultados]
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+        if tipo == 'produto':
+            cur.execute("SELECT PRD_CODIGO AS id, PRD_NOME AS nome, PRD_OBSERVA AS observa, PRD_PRECO AS preco FROM produto WHERE D_E_L_E_T_ IS NULL AND (PRD_NOME ILIKE %s OR PRD_CODIGO::text ILIKE %s)",
+                        (f"%{termo}%", f"%{termo}%"))
+        else:
+            cur.execute("SELECT SRV_CODIGO AS id, SRV_NOME AS nome, SRV_OBSERVA AS observa, SRV_PRECO AS preco FROM servico WHERE D_E_L_E_T_ IS NULL AND (SRV_NOME ILIKE %s OR SRV_CODIGO::text ILIKE %s)",
+                        (f"%{termo}%", f"%{termo}%"))
+    
+        resultados = cur.fetchall()
+        cur.close()
+        conn.close()
+    
+        colnames = [desc[0] for desc in cur.description]
+        dados = [dict(zip(colnames, row)) for row in resultados]
 
     if valid_login() == False:
             return redirect(url_for("login"))
@@ -649,6 +871,10 @@ def get_qts():
         return jsonify(carrinho)
 
 def get_max_vndcod():
+    if TipConDB == 1:
+        db = load_json_db()
+        return max([item.get('VND_CODIGO', 0) for item in db.get('vendas', [])], default=0)
+
     conn = get_db_connection()
     cur = conn.cursor()
 
@@ -665,27 +891,38 @@ def get_max_vndcod():
 def dlt_venda():
     codigo = request.form.get('codigo')
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-    try:
-        cur.execute("UPDATE VENDAS SET D_E_L_E_T_ = %s WHERE VND_CODIGO = %s;", ('*', codigo))
-        conn.commit()
+    if TipConDB == 1:
+        db = load_json_db()
+        for v in db.get('vendas', []):
+            if str(v.get('VND_CODIGO')) == str(codigo):
+                v['D_E_L_E_T_'] = '*'
+        save_json_db(db)
         if valid_login() == False:
             return redirect(url_for("login"))
         else:
             return redirect(url_for("dir_vendas"))
-
-    except Exception as e:
-        conn.rollback()
-        if valid_login() == False:
-            return redirect(url_for("login"))
-        else:
-            return render_template("vendas.html",alert = f"Erro ao excluir produto: {e}")
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
     
-    finally:
-        cur.close()
-        conn.close()
+        try:
+            cur.execute("UPDATE VENDAS SET D_E_L_E_T_ = %s WHERE VND_CODIGO = %s;", ('*', codigo))
+            conn.commit()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return redirect(url_for("dir_vendas"))
+    
+        except Exception as e:
+            conn.rollback()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("vendas.html",alert = f"Erro ao excluir venda: {e}")
+        
+        finally:
+            cur.close()
+            conn.close()
 
 @app.route('/submit_carrinho', methods = ['POST'])
 def submit_carrinho():
@@ -714,32 +951,52 @@ def submit_carrinho():
     vnd_tel = cliente[2]
     vnd_doc = cliente[0]
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-
-# Precisa fazer na query um ALTER TABLE VENDAS ADD VND_DATA DATE
-# Formato da data: YYYY-MM-DD hh:mm:ss
-    try:
-        cur.execute("""INSERT INTO VENDAS (VND_CODIGO, VND_CLIENTE, VND_NOMECLI, VND_TEL, VND_DOC,
-                    VND_NOMEPRD, VND_TOTAL, D_E_L_E_T_, R_E_C_N_O_, 
-                    R_E_C_D_E_L_) VALUES ( %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);
-                    """,(ad_vnd_cod, vnd_cliente, vnd_nomecli, str(vnd_tel), vnd_doc, bigStrCart, valor_total))
-        conn.commit()
-        return redirect(url_for("dir_vendas"))
-
-    except Exception as e:
-        conn.rollback()
-        print("Erro ao inserir venda:", e)
-        if valid_login() == False:
-            return redirect(url_for("login"))
-        else:
-            return jsonify({"Erro": str(e)})
-
-    finally:
-        conn.close()
-        cur.close()
+    if TipConDB == 1:
+        db = load_json_db()
+        nova_venda = {
+            'VND_CODIGO': ad_vnd_cod,
+            'VND_CLIENTE': vnd_cliente,
+            'VND_NOMECLI': vnd_nomecli,
+            'VND_TEL': str(vnd_tel),
+            'VND_DOC': vnd_doc,
+            'VND_NOMEPRD': bigStrCart,
+            'VND_TOTAL': valor_total,
+            'VND_DATA': datetime.now().strftime('%Y-%m-%d %H:%M'),
+            'D_E_L_E_T_': None
+        }
+        db.setdefault('vendas', []).append(nova_venda)
+        save_json_db(db)
+        
         session.pop('cliente', None)
         session.pop('carrinho', None)
+        return redirect(url_for("dir_vendas"))
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+    # Precisa fazer na query um ALTER TABLE VENDAS ADD VND_DATA DATE
+    # Formato da data: YYYY-MM-DD hh:mm:ss
+        try:
+            cur.execute("""INSERT INTO VENDAS (VND_CODIGO, VND_CLIENTE, VND_NOMECLI, VND_TEL, VND_DOC,
+                        VND_NOMEPRD, VND_TOTAL, VND_DATA, D_E_L_E_T_, R_E_C_N_O_, 
+                        R_E_C_D_E_L_) VALUES ( %s, %s, %s, %s, %s, %s, %s, %s, NULL, 1, NULL);
+                        """,(ad_vnd_cod, vnd_cliente, vnd_nomecli, str(vnd_tel), vnd_doc, bigStrCart, valor_total, datetime.now().strftime('%Y-%m-%d %H:%M')))
+            conn.commit()
+            return redirect(url_for("dir_vendas"))
+    
+        except Exception as e:
+            conn.rollback()
+            print("Erro ao inserir venda:", e)
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return jsonify({"Erro": str(e)})
+    
+        finally:
+            conn.close()
+            cur.close()
+            session.pop('cliente', None)
+            session.pop('carrinho', None)
 
 
 if __name__ == '__main__':

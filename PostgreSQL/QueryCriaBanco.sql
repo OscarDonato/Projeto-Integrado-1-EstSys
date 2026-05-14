@@ -396,7 +396,7 @@ Create Table VENDAS(
 	VND_OBSERVA 	dm_obse,
 	
     D_E_L_E_T_		dm_delt,
-    R_E_C_N_O_		dm_recn,
+    R_E_C_N_O_		Bigserial UNIQUE Not Null,
     R_E_C_D_E_L_	dm_rcdl,
 	
     Primary Key (VND_CODIGO, R_E_C_N_O_),
@@ -404,20 +404,6 @@ Create Table VENDAS(
 	Foreign Key (VND_PRODUTO) References PRODUTO(PRD_CODIGO),
 	Foreign Key (VND_SERVICO) References SERVICO(SRV_CODIGO)
 );
-
-
-Create Or Replace Function set_recno_venda()
-Returns Trigger As $$
-Begin
-    NEW.R_E_C_N_O_ := Coalesce( ( Select Max(R_E_C_N_O_) From VENDAS ), 0) + 1;
-    Return NEW;
-End;
-$$ Language plpgsql;
-
-Create Trigger trg_set_recno_venda
-Before Insert On VENDAS
-For Each Row
-Execute Function set_recno_venda();
 
 
 -----------
@@ -615,6 +601,3 @@ $$;
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
-
-
-
