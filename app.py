@@ -6,7 +6,7 @@ app = Flask(__name__)
 app.secret_key = "chave_super_secreta_projeto"
 
 # Caminho do arquivo JSON
-DB_FILE = os.path.join(os.path.dirname(__file__), 'DBAplication', 'database.json')
+DB_FILE = os.path.join(os.path.dirname(__file__), 'templates', 'database.json')
 
 def save_db(data):
     with open(DB_FILE, 'w', encoding='utf-8') as f:
@@ -15,14 +15,14 @@ def save_db(data):
 def load_db():
     if not os.path.exists(DB_FILE):
         os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
-        default_data = {'clientes': [], 'produtos': [], 'servicos': [], 'vendas': []}
+        default_data = {'clientes': [], 'produtos': [], 'servicos': [], 'vendas': [], 'grupos_acesso': [], 'usuarios': []}
         save_db(default_data)
         return default_data
     with open(DB_FILE, 'r', encoding='utf-8') as f:
         return json.load(f)
 
 def get_next_id(db, tabela):
-    return max([item['id'] for item in db[tabela]], default=0) + 1
+    return max([item.get('id', 0) for item in db.get(tabela, [])], default=0) + 1
 
 # Rota principal e index
 @app.route('/')
@@ -136,6 +136,62 @@ def dlt_servico():
     save_db(db)
     flash('Serviço excluído com sucesso!')
     return redirect(url_for('cadastro_servicos'))
+
+# Rotas de Grupos de Acesso
+@app.route('/grupos_acesso')
+def grupos_acesso():
+    if not session.get('logado'): return redirect(url_for('login'))
+    db = load_db()
+    return render_template('grupos_acesso.html', rows=db.get('grupos_acesso', []))
+
+@app.route('/add_grupo_acesso', methods=['POST'])
+def add_grupo_acesso():
+    nome = request.form.get('nome')
+    descricao = request.form.get('descricao')
+    if nome:
+        db = load_db()
+        db.setdefault('grupos_acesso', []).append({'id': get_next_id(db, 'grupos_acesso'), 'nome': nome, 'descricao': descricao})
+        save_db(db)
+        flash('Grupo de Acesso cadastrado com sucesso!')
+    return redirect(url_for('grupos_acesso'))
+
+@app.route('/dlt_grupo_acesso', methods=['POST'])
+def dlt_grupo_acesso():
+    id_grupo = request.form.get('id', type=int)
+    db = load_db()
+    db['grupos_acesso'] = [g for g in db.get('grupos_acesso', []) if g.get('id') != id_grupo]
+    save_db(db)
+    flash('Grupo de Acesso excluído com sucesso!')
+    return redirect(url_for('grupos_acesso'))
+
+# Rotas de Usuários
+@app.route('/usuarios')
+def usuarios():
+    if not session.get('logado'): return redirect(url_for('login'))
+    db = load_db()
+    return render_template('usuarios.html', rows=db.get('usuarios', []))
+
+@app.route('/add_usuario', methods=['POST'])
+def add_usuario():
+    nome = request.form.get('nome')
+    login_user = request.form.get('login')
+    senha = request.form.get('senha')
+    id_grupo_acesso = request.form.get('id_grupo_acesso', type=int)
+    if nome and login_user and senha:
+        db = load_db()
+        db.setdefault('usuarios', []).append({'id': get_next_id(db, 'usuarios'), 'nome': nome, 'login': login_user, 'senha': senha, 'id_grupo_acesso': id_grupo_acesso})
+        save_db(db)
+        flash('Usuário cadastrado com sucesso!')
+    return redirect(url_for('usuarios'))
+
+@app.route('/dlt_usuario', methods=['POST'])
+def dlt_usuario():
+    id_usuario = request.form.get('id', type=int)
+    db = load_db()
+    db['usuarios'] = [u for u in db.get('usuarios', []) if u.get('id') != id_usuario]
+    save_db(db)
+    flash('Usuário excluído com sucesso!')
+    return redirect(url_for('usuarios'))
 
 # Rotas de Vendas e Carrinho
 @app.route('/vendas')

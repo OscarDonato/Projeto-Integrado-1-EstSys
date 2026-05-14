@@ -38,6 +38,12 @@ Create Domain dm_obse Varchar(500)		Default ''	;
 Create Domain dm_delt Varchar(1)					;
 Create Domain dm_recn Bigint			Not Null	;
 Create Domain dm_rcdl Bigint			Default 0	;
+Create Domain dm_grap_codi Varchar(8)	Not Null	;
+Create Domain dm_grap_desc Varchar(50)				;
+Create Domain dm_grap_tipo Varchar(1)	Check (Value IN ('1', '2', '3'))	;
+Create Domain dm_usur_codi Numeric(3)	Not Null	;
+Create Domain dm_usur_nome Varchar(100)				;
+Create Domain dm_usur_emai Varchar(50)				;
 
 
 -------------------------------------------------------------------------------------
@@ -592,12 +598,230 @@ $$;
 
 
 -------------------------------------------------------------------------
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------------
+-- Passo 7:																			--
+--	Criação da tabela de cadastro de grupo de acesso, de Triggers, Funções e Procedures	--
+-------------------------------------------------------------------------------------
+
+-----------
+--	7.1 Cria Tabela GRUPO_ACESSO
+-----------
+Create Table GRUPO_ACESSO(
+	GRP_CODIGO		dm_grap_codi Unique,
+	GRP_DESCRICAO	dm_grap_desc,
+	GRP_TIPOACESSO	dm_grap_tipo,
+    D_E_L_E_T_		dm_delt,
+    R_E_C_N_O_		dm_recn Unique,
+    R_E_C_D_E_L_	dm_rcdl,
+	
+    Primary Key (GRP_CODIGO, R_E_C_N_O_)
+);
+
+-----------
+--	7.2 Cria Trigger para autoimplementação do recno
+-----------
+Create Or Replace Function set_recno_grupo_acesso()
+Returns Trigger As $$
+Begin
+    NEW.R_E_C_N_O_ := Coalesce( ( Select Max(R_E_C_N_O_) From GRUPO_ACESSO ), 0) + 1;
+    Return NEW;
+End;
+$$ Language plpgsql;
+
+Create Trigger trg_set_recno_grupo_acesso
+Before Insert On GRUPO_ACESSO
+For Each Row
+Execute Function set_recno_grupo_acesso();
+
+-----------
+--	7.3 Cria Procedure para inclusão de dados na tabela de GRUPO_ACESSO
+-----------
+Create Or Replace Procedure add_grupo_acesso(
+    ad_GRP_CODIGO		dm_grap_codi,
+	ad_GRP_DESCRICAO	dm_grap_desc,
+	ad_GRP_TIPOACESSO	dm_grap_tipo
+)
+Language plpgsql As $$
+Begin
+    Insert Into GRUPO_ACESSO ( GRP_CODIGO, GRP_DESCRICAO, GRP_TIPOACESSO )
+    Values ( ad_GRP_CODIGO, ad_GRP_DESCRICAO, ad_GRP_TIPOACESSO );
+End;
+$$;
+
+-----------
+--	7.4 Cria Procedure para alterar registro dos dados na tabela de GRUPO_ACESSO
+-----------
+Create Or Replace Procedure alte_grupo_acesso(
+	alte_GRP_CODIGO		dm_grap_codi,
+	alte_GRP_DESCRICAO	dm_grap_desc,
+	alte_GRP_TIPOACESSO	dm_grap_tipo
+)
+Language plpgsql As $$
+Begin
+
+	If IsNull( alte_GRP_DESCRICAO, '' ) <> ''
+		Then
+        Update GRUPO_ACESSO Set GRP_DESCRICAO = alte_GRP_DESCRICAO Where GRP_CODIGO = alte_GRP_CODIGO;
+    End If;
+	
+	If IsNull( alte_GRP_TIPOACESSO, '' ) <> ''
+		Then
+        Update GRUPO_ACESSO Set GRP_TIPOACESSO = alte_GRP_TIPOACESSO Where GRP_CODIGO = alte_GRP_CODIGO;
+    End If;
+	
+End;
+$$;
+
+
+-----------
+--	7.5 Cria Procedure para "deletar" registro dos dados na tabela de GRUPO_ACESSO
+-----------
+Create Or Replace Procedure dlt_grupo_acesso(
+	dlt_GRP_CODIGO		dm_grap_codi
+)
+Language plpgsql As $$
+Begin
+    Update GRUPO_ACESSO Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ Where GRP_CODIGO = dlt_GRP_CODIGO;
+End;
+$$;
+
+------------------------------------------------------------------------------
+--	Fim da parte de GRUPO_ACESSO - Fim Passo 7	--
+------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------------------
+-- Passo 8:																			--
+--	Criação da tabela de cadastro de usuários, de Triggers, Funções e Procedures	--
+-------------------------------------------------------------------------------------
+
+-----------
+--	8.1 Cria Tabela USUARIOS
+-----------
+Create Table USUARIOS(
+	USR_CODIGO		dm_usur_codi Unique,
+	USR_NOME		dm_usur_nome,
+	USR_EMAIL		dm_usur_emai,
+	USR_TELEFONE	dm_tele,
+	USR_GRUPO		dm_grap_codi,
+    D_E_L_E_T_		dm_delt,
+    R_E_C_N_O_		dm_recn Unique,
+    R_E_C_D_E_L_	dm_rcdl,
+	
+    Primary Key (USR_CODIGO, R_E_C_N_O_),
+	Foreign Key (USR_GRUPO) References GRUPO_ACESSO(GRP_CODIGO)
+);
+
+-----------
+--	8.2 Cria Trigger para autoimplementação do recno
+-----------
+Create Or Replace Function set_recno_usuarios()
+Returns Trigger As $$
+Begin
+    NEW.R_E_C_N_O_ := Coalesce( ( Select Max(R_E_C_N_O_) From USUARIOS ), 0) + 1;
+    Return NEW;
+End;
+$$ Language plpgsql;
+
+Create Trigger trg_set_recno_usuarios
+Before Insert On USUARIOS
+For Each Row
+Execute Function set_recno_usuarios();
+
+-----------
+--	8.3 Cria Procedure para inclusão de dados na tabela de USUARIOS
+-----------
+Create Or Replace Procedure add_usuario(
+    ad_USR_CODIGO		dm_usur_codi,
+	ad_USR_NOME			dm_usur_nome,
+	ad_USR_EMAIL		dm_usur_emai,
+	ad_USR_TELEFONE		dm_tele,
+	ad_USR_GRUPO		dm_grap_codi
+)
+Language plpgsql As $$
+Begin
+    Insert Into USUARIOS ( USR_CODIGO, USR_NOME, USR_EMAIL, USR_TELEFONE, USR_GRUPO )
+    Values ( ad_USR_CODIGO, ad_USR_NOME, ad_USR_EMAIL, ad_USR_TELEFONE, ad_USR_GRUPO );
+End;
+$$;
+
+-----------
+--	8.4 Cria Procedure para alterar registro dos dados na tabela de USUARIOS
+-----------
+Create Or Replace Procedure alte_usuario(
+	alte_USR_CODIGO		dm_usur_codi,
+	alte_USR_NOME		dm_usur_nome,
+	alte_USR_EMAIL		dm_usur_emai,
+	alte_USR_TELEFONE	dm_tele,
+	alte_USR_GRUPO		dm_grap_codi
+)
+Language plpgsql As $$
+Begin
+
+	If IsNull( alte_USR_NOME, '' ) <> ''
+		Then
+        Update USUARIOS Set USR_NOME = alte_USR_NOME Where USR_CODIGO = alte_USR_CODIGO;
+    End If;
+	
+	If IsNull( alte_USR_EMAIL, '' ) <> ''
+		Then
+        Update USUARIOS Set USR_EMAIL = alte_USR_EMAIL Where USR_CODIGO = alte_USR_CODIGO;
+    End If;
+	
+	If IsNull( alte_USR_TELEFONE, '' ) <> ''
+		Then
+        Update USUARIOS Set USR_TELEFONE = alte_USR_TELEFONE Where USR_CODIGO = alte_USR_CODIGO;
+    End If;
+	
+	If IsNull( alte_USR_GRUPO, '' ) <> ''
+		Then
+        Update USUARIOS Set USR_GRUPO = alte_USR_GRUPO Where USR_CODIGO = alte_USR_CODIGO;
+    End If;
+	
+End;
+$$;
+
+
+-----------
+--	8.5 Cria Procedure para "deletar" registro dos dados na tabela de USUARIOS
+-----------
+Create Or Replace Procedure dlt_usuario(
+	dlt_USR_CODIGO		dm_usur_codi
+)
+Language plpgsql As $$
+Begin
+    Update USUARIOS Set D_E_L_E_T_ = '*', R_E_C_D_E_L_ = R_E_C_N_O_ Where USR_CODIGO = dlt_USR_CODIGO;
+End;
+$$;
+
+------------------------------------------------------------------------------
+--	Fim da parte de USUARIOS - Fim Passo 8	--
+------------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+-------------------------------------------------------------------------
+
+
+-------------------------------------------------------------------------
 --- Exemplos															--
 -------------------------------------------------------------------------
 --	Select * From CLIENTE Where D_E_L_E_T_ = '';
 --	Select * From PRODUTO Where D_E_L_E_T_ = '';
 --	Select * From SERVICO Where D_E_L_E_T_ = '';
 --	Select * From VENDAS  Where D_E_L_E_T_ = ''
+--	Select * From GRUPO_ACESSO  Where D_E_L_E_T_ = ''
+--	Select * From USUARIOS  Where D_E_L_E_T_ = ''
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------
 -------------------------------------------------------------------------

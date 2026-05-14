@@ -60,6 +60,12 @@
         <p>Gerenciamento dos grupos e permissões.</p>
 
         <a href="#" class="btn btn-add">+ Novo Grupo</a>
+        <form method="POST" action="/add_grupo" style="margin-bottom: 20px;">
+            <input type="text" name="grp_id" placeholder="ID" required style="padding: 8px; margin-right: 5px; width: 60px;">
+            <input type="text" name="grp_nome" placeholder="Nome do Grupo" required style="padding: 8px; margin-right: 5px;">
+            <input type="text" name="grp_desc" placeholder="Descrição" required style="padding: 8px; margin-right: 5px;">
+            <button type="submit" class="btn btn-add" style="margin-bottom: 0;">Adicionar Grupo</button>
+        </form>
 
         <table>
             <thead>
@@ -72,13 +78,21 @@
             </thead>
             <tbody>
                 <!-- Estrutura de exemplo (pode ser iterada com Jinja2 na aplicação final) -->
+                {% for row in rows %}
                 <tr>
                     <td>1</td>
                     <td>Administrador</td>
                     <td>Acesso total ao sistema</td>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[2] }}</td>
                     <td>
                         <button class="btn btn-edit">Alterar</button>
                         <button class="btn btn-delete">Remover</button>
+                        <form method="POST" action="/dlt_grupo" style="display:inline;">
+                            <input type="hidden" name="codigo" value="{{ row[0] }}">
+                            <button type="submit" class="btn btn-delete">X</button>
+                        </form>
                     </td>
                 </tr>
                 <tr>
@@ -90,6 +104,7 @@
                         <button class="btn btn-delete">Remover</button>
                     </td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
