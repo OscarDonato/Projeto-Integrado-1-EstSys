@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
+            background-color: #ced4da; /* Fundo cinza mais escuro */
             margin: 0;
             padding: 40px;
             color: #333;
@@ -15,7 +15,7 @@
         .container {
             max-width: 800px;
             margin: auto;
-            background-color: #ffffff;
+            background-color: #e9ecef; /* Container cinza claro */
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -34,9 +34,9 @@
             border-collapse: collapse;
             margin-top: 20px;
         }
-        table, th, td { border: 1px solid #ccc; }
+        table, th, td { border: 1px solid #adb5bd; }
         th, td { padding: 12px; text-align: left; }
-        th { background-color: #f4f4f4; }
+        th { background-color: #dee2e6; }
         .btn {
             padding: 8px 12px;
             color: white;
@@ -61,47 +61,38 @@
 
         <a href="#" class="btn btn-add">+ Novo Grupo</a>
         <form method="POST" action="/add_grupo" style="margin-bottom: 20px;">
-            <input type="text" name="grp_id" placeholder="ID" required style="padding: 8px; margin-right: 5px; width: 60px;">
-            <input type="text" name="grp_nome" placeholder="Nome do Grupo" required style="padding: 8px; margin-right: 5px;">
-            <input type="text" name="grp_desc" placeholder="Descrição" required style="padding: 8px; margin-right: 5px;">
+            <input type="text" name="grp_codigo" placeholder="Cód. Grupo" required style="padding: 8px; margin-right: 5px; width: 90px;">
+            <input type="text" name="grp_descricao" placeholder="Descrição" required style="padding: 8px; margin-right: 5px;">
+            <select name="grp_tipoacesso" required style="padding: 8px; margin-right: 5px;">
+                <option value="" disabled selected>Tipo de Acesso</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+            </select>
             <button type="submit" class="btn btn-add" style="margin-bottom: 0;">Adicionar Grupo</button>
         </form>
 
         <table>
             <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Nome do Grupo</th>
+                    <th>Cód. Grupo</th>
                     <th>Descrição</th>
+                    <th>Tipo de Acesso</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Estrutura de exemplo (pode ser iterada com Jinja2 na aplicação final) -->
                 {% for row in rows %}
                 <tr>
-                    <td>1</td>
-                    <td>Administrador</td>
-                    <td>Acesso total ao sistema</td>
                     <td>{{ row[0] }}</td>
                     <td>{{ row[1] }}</td>
                     <td>{{ row[2] }}</td>
                     <td>
                         <button class="btn btn-edit">Alterar</button>
-                        <button class="btn btn-delete">Remover</button>
                         <form method="POST" action="/dlt_grupo" style="display:inline;">
                             <input type="hidden" name="codigo" value="{{ row[0] }}">
                             <button type="submit" class="btn btn-delete">X</button>
                         </form>
-                    </td>
-                </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Vendedor</td>
-                    <td>Acesso às rotinas de vendas e clientes</td>
-                    <td>
-                        <button class="btn btn-edit">Alterar</button>
-                        <button class="btn btn-delete">Remover</button>
                     </td>
                 </tr>
                 {% endfor %}

@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f4f6f9;
+            background-color: #ced4da; /* Fundo cinza mais escuro */
             margin: 0;
             padding: 40px;
             color: #333;
@@ -15,7 +15,7 @@
         .container {
             max-width: 800px;
             margin: auto;
-            background-color: #ffffff;
+            background-color: #e9ecef; /* Container cinza claro */
             padding: 30px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
@@ -34,9 +34,9 @@
             border-collapse: collapse;
             margin-top: 20px;
         }
-        table, th, td { border: 1px solid #ccc; }
+        table, th, td { border: 1px solid #adb5bd; }
         th, td { padding: 12px; text-align: left; }
-        th { background-color: #f4f4f4; }
+        th { background-color: #dee2e6; }
         .btn {
             padding: 8px 12px;
             color: white;
@@ -60,6 +60,15 @@
         <p>Gerenciamento dos usuários do sistema e suas permissões associadas.</p>
 
         <a href="#" class="btn btn-add">+ Novo Usuário</a>
+        <form method="POST" action="/add_usuario" style="margin-bottom: 20px;">
+            <input type="text" name="usr_codigo" placeholder="ID" required style="padding: 8px; margin-right: 5px; width: 60px;">
+            <input type="text" name="usr_nome" placeholder="Nome" required style="padding: 8px; margin-right: 5px;">
+            <input type="email" name="usr_email" placeholder="E-mail" required style="padding: 8px; margin-right: 5px;">
+            <input type="text" name="usr_telefone" placeholder="Telefone" required style="padding: 8px; margin-right: 5px; width: 120px;">
+            <input type="text" name="usr_grupo" placeholder="Cód. Grupo" required style="padding: 8px; margin-right: 5px; width: 80px;">
+            <input type="password" name="usr_senha" placeholder="Senha" required style="padding: 8px; margin-right: 5px; width: 100px;">
+            <button type="submit" class="btn btn-add" style="margin-bottom: 0;">Adicionar Usuário</button>
+        </form>
 
         <table>
             <thead>
@@ -67,32 +76,30 @@
                     <th>ID</th>
                     <th>Nome</th>
                     <th>E-mail</th>
+                    <th>Telefone</th>
                     <th>Grupo</th>
+                    <th>Senha</th>
                     <th>Ações</th>
                 </tr>
             </thead>
             <tbody>
-                <!-- Estrutura de exemplo (pode ser iterada com Jinja2 na aplicação final) -->
+                {% for row in rows %}
                 <tr>
-                    <td>1</td>
-                    <td>João Silva</td>
-                    <td>joao@estetsys.com.br</td>
-                    <td>Administrador</td>
+                    <td>{{ row[0] }}</td>
+                    <td>{{ row[1] }}</td>
+                    <td>{{ row[2] }}</td>
+                    <td>{{ row[3] }}</td>
+                    <td>{{ row[4] }}</td>
+                    <td>{{ row[5] }}</td>
                     <td>
                         <button class="btn btn-edit">Alterar</button>
-                        <button class="btn btn-delete">Remover</button>
+                        <form method="POST" action="/dlt_usuario" style="display:inline;">
+                            <input type="hidden" name="codigo" value="{{ row[0] }}">
+                            <button type="submit" class="btn btn-delete">X</button>
+                        </form>
                     </td>
                 </tr>
-                <tr>
-                    <td>2</td>
-                    <td>Maria Souza</td>
-                    <td>maria@estetsys.com.br</td>
-                    <td>Vendedor</td>
-                    <td>
-                        <button class="btn btn-edit">Alterar</button>
-                        <button class="btn btn-delete">Remover</button>
-                    </td>
-                </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>

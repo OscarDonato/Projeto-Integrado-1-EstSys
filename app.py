@@ -1,6 +1,7 @@
 import os
 import json
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta_projeto"
@@ -21,8 +22,8 @@ def load_db():
     with open(DB_FILE, 'r', encoding='utf-8') as f:
         return json.load(f)
 
-def get_next_id(db, tabela):
-    return max([item.get('id', 0) for item in db.get(tabela, [])], default=0) + 1
+def get_next_id(db, tabela, id_field='id'):
+    return max([int(item.get(id_field, 0) or 0) for item in db.get(tabela, [])], default=0) + 1
 
 # Rota principal e index
 @app.route('/')
@@ -42,13 +43,20 @@ def ver_login():
     usuario = request.form.get('usuario')
     senha = request.form.get('senha')
     
-    # Validação simples de login
+    # Validação do usuário admin
     if usuario == 'admin' and senha == '1234':
         session['logado'] = True
         return redirect(url_for('index'))
-    else:
-        flash('Usuário ou senha inválidos!')
-        return redirect(url_for('login'))
+        
+    # Validação pela tabela de usuários no JSON
+    db = load_db()
+    for u in db.get('usuarios', []):
+        if (u.get('USR_NOME') == usuario or u.get('USR_EMAIL') == usuario) and check_password_hash(str(u.get('USR_SENHA', '')), senha):
+            session['logado'] = True
+            return redirect(url_for('index'))
+            
+    flash('Usuário ou senha inválidos!')
+    return redirect(url_for('login'))
 
 @app.route('/sair')
 def sair():
@@ -146,20 +154,24 @@ def grupos_acesso():
 
 @app.route('/add_grupo_acesso', methods=['POST'])
 def add_grupo_acesso():
-    nome = request.form.get('nome')
     descricao = request.form.get('descricao')
-    if nome:
+    tipo_acesso = request.form.get('tipo_acesso')
+    if descricao and tipo_acesso:
         db = load_db()
-        db.setdefault('grupos_acesso', []).append({'id': get_next_id(db, 'grupos_acesso'), 'nome': nome, 'descricao': descricao})
+        db.setdefault('grupos_acesso', []).append({
+            'GRP_CODIGO': str(get_next_id(db, 'grupos_acesso', 'GRP_CODIGO')), 
+            'GRP_DESCRICAO': descricao, 
+            'GRP_TIPOACESSO': tipo_acesso
+        })
         save_db(db)
         flash('Grupo de Acesso cadastrado com sucesso!')
     return redirect(url_for('grupos_acesso'))
 
 @app.route('/dlt_grupo_acesso', methods=['POST'])
 def dlt_grupo_acesso():
-    id_grupo = request.form.get('id', type=int)
+    id_grupo = request.form.get('id')
     db = load_db()
-    db['grupos_acesso'] = [g for g in db.get('grupos_acesso', []) if g.get('id') != id_grupo]
+    db['grupos_acesso'] = [g for g in db.get('grupos_acesso', []) if str(g.get('GRP_CODIGO')) != str(id_grupo)]
     save_db(db)
     flash('Grupo de Acesso excluído com sucesso!')
     return redirect(url_for('grupos_acesso'))
@@ -173,13 +185,21 @@ def usuarios():
 
 @app.route('/add_usuario', methods=['POST'])
 def add_usuario():
-    nome = request.form.get('nome')
-    login_user = request.form.get('login')
-    senha = request.form.get('senha')
-    id_grupo_acesso = request.form.get('id_grupo_acesso', type=int)
-    if nome and login_user and senha:
+    nome = request.form.get('usr_nome')
+    email = request.form.get('usr_email')
+    telefone = request.form.get('usr_telefone')
+    grupo = request.form.get('usr_grupo')
+    senha = request.form.get('usr_senha')
+    if nome and email and telefone and grupo and senha:
         db = load_db()
-        db.setdefault('usuarios', []).append({'id': get_next_id(db, 'usuarios'), 'nome': nome, 'login': login_user, 'senha': senha, 'id_grupo_acesso': id_grupo_acesso})
+        db.setdefault('usuarios', []).append({
+            'USR_CODIGO': get_next_id(db, 'usuarios', 'USR_CODIGO'), 
+            'USR_NOME': nome, 
+            'USR_EMAIL': email, 
+            'USR_TELEFONE': telefone, 
+            'USR_GRUPO': grupo,
+            'USR_SENHA': generate_password_hash(senha)
+        })
         save_db(db)
         flash('Usuário cadastrado com sucesso!')
     return redirect(url_for('usuarios'))
@@ -188,7 +208,7 @@ def add_usuario():
 def dlt_usuario():
     id_usuario = request.form.get('id', type=int)
     db = load_db()
-    db['usuarios'] = [u for u in db.get('usuarios', []) if u.get('id') != id_usuario]
+    db['usuarios'] = [u for u in db.get('usuarios', []) if int(u.get('USR_CODIGO', 0)) != id_usuario]
     save_db(db)
     flash('Usuário excluído com sucesso!')
     return redirect(url_for('usuarios'))

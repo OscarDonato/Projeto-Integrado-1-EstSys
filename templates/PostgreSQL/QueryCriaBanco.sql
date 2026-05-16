@@ -44,6 +44,7 @@ Create Domain dm_grap_tipo Varchar(1)	Check (Value IN ('1', '2', '3'))	;
 Create Domain dm_usur_codi Numeric(3)	Not Null	;
 Create Domain dm_usur_nome Varchar(100)				;
 Create Domain dm_usur_emai Varchar(50)				;
+Create Domain dm_usur_senh Varchar(100)				;
 
 
 -------------------------------------------------------------------------------------
@@ -713,6 +714,7 @@ Create Table USUARIOS(
 	USR_EMAIL		dm_usur_emai,
 	USR_TELEFONE	dm_tele,
 	USR_GRUPO		dm_grap_codi,
+	USR_SENHA		dm_usur_senh,
     D_E_L_E_T_		dm_delt,
     R_E_C_N_O_		dm_recn Unique,
     R_E_C_D_E_L_	dm_rcdl,
@@ -745,12 +747,13 @@ Create Or Replace Procedure add_usuario(
 	ad_USR_NOME			dm_usur_nome,
 	ad_USR_EMAIL		dm_usur_emai,
 	ad_USR_TELEFONE		dm_tele,
-	ad_USR_GRUPO		dm_grap_codi
+	ad_USR_GRUPO		dm_grap_codi,
+	ad_USR_SENHA		dm_usur_senh
 )
 Language plpgsql As $$
 Begin
-    Insert Into USUARIOS ( USR_CODIGO, USR_NOME, USR_EMAIL, USR_TELEFONE, USR_GRUPO )
-    Values ( ad_USR_CODIGO, ad_USR_NOME, ad_USR_EMAIL, ad_USR_TELEFONE, ad_USR_GRUPO );
+    Insert Into USUARIOS ( USR_CODIGO, USR_NOME, USR_EMAIL, USR_TELEFONE, USR_GRUPO, USR_SENHA )
+    Values ( ad_USR_CODIGO, ad_USR_NOME, ad_USR_EMAIL, ad_USR_TELEFONE, ad_USR_GRUPO, ad_USR_SENHA );
 End;
 $$;
 
@@ -762,7 +765,8 @@ Create Or Replace Procedure alte_usuario(
 	alte_USR_NOME		dm_usur_nome,
 	alte_USR_EMAIL		dm_usur_emai,
 	alte_USR_TELEFONE	dm_tele,
-	alte_USR_GRUPO		dm_grap_codi
+	alte_USR_GRUPO		dm_grap_codi,
+	alte_USR_SENHA		dm_usur_senh
 )
 Language plpgsql As $$
 Begin
@@ -785,6 +789,11 @@ Begin
 	If IsNull( alte_USR_GRUPO, '' ) <> ''
 		Then
         Update USUARIOS Set USR_GRUPO = alte_USR_GRUPO Where USR_CODIGO = alte_USR_CODIGO;
+    End If;
+	
+	If IsNull( alte_USR_SENHA, '' ) <> ''
+		Then
+        Update USUARIOS Set USR_SENHA = alte_USR_SENHA Where USR_CODIGO = alte_USR_CODIGO;
     End If;
 	
 End;

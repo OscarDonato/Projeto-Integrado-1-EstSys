@@ -15,7 +15,7 @@ global TipConDB
 TipConDB = 2 # 1 = Aplicação/Memória, 2 = DB Postgre
 # teste commit
 
-DB_FILE = os.path.join(os.path.dirname(__file__), 'DBAplication', 'database.json')
+DB_FILE = os.path.join(os.path.dirname(__file__), 'templates', 'database.json')
 
 def save_json_db(data):
     with open(DB_FILE, 'w', encoding='utf-8') as f:
@@ -24,7 +24,7 @@ def save_json_db(data):
 def load_json_db():
     if not os.path.exists(DB_FILE):
         os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
-        default_data = {'cliente': [], 'produto': [], 'servico': [], 'vendas': []}
+        default_data = {'cliente': [], 'produto': [], 'servico': [], 'vendas': [], 'grupos_acesso': [], 'usuarios': []}
         save_json_db(default_data)
         return default_data
     with open(DB_FILE, 'r', encoding='utf-8') as f:
@@ -112,6 +112,18 @@ def dir_cadastro_servicos():
         return redirect(url_for("login"))
     else:
         return render_template('cadastro_servicos.html')
+
+@app.route('/grupos_acesso')
+def dir_grupos_acesso():
+    if valid_login() == False:
+        return redirect(url_for("login"))
+    return render_template('grupos_acesso.html')
+
+@app.route('/usuarios')
+def dir_usuarios():
+    if valid_login() == False:
+        return redirect(url_for("login"))
+    return render_template('usuarios.html')
 
 @app.route('/vendas')
 def dir_vendas():
@@ -495,6 +507,222 @@ def dlt_servico():
             else:
                 return render_template("cadastro_servicos.html",alert = f"Erro ao excluir produto: {e}")
         
+        finally:
+            cur.close()
+            conn.close()
+
+########################    Seção de Grupos de Acesso   ########################
+
+def max_grp_cod():
+    if TipConDB == 1:
+        db = load_json_db()
+        return max([item.get('GRP_CODIGO', 0) for item in db.get('grupos_acesso', [])], default=0)
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT MAX(GRP_CODIGO) FROM GRUPO_ACESSO;")
+    last_grp_cod = cur.fetchone()[0]
+
+    if not last_grp_cod:
+        last_grp_cod = 0
+
+    cur.close()
+    conn.close()
+    return last_grp_cod
+
+@app.route('/add_grupo_acesso', methods=['POST'])
+def add_grupo_acesso():
+    data = request.form
+    ad_GRP_CODIGO    = max_grp_cod() + 1
+    ad_GRP_TIPOACESSO = data.get('grpTipoAcesso', '').strip()
+    ad_GRP_DESCRICAO = data.get('grpDescricao', '').strip()
+
+    if not ad_GRP_DESCRICAO or not ad_GRP_TIPOACESSO:
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("grupos_acesso.html", alert="Dados incompletos", rows=[])
+    
+    if TipConDB == 1:
+        db = load_json_db()
+        novo_grupo = {
+            'GRP_CODIGO': ad_GRP_CODIGO,
+            'GRP_DESCRICAO': ad_GRP_DESCRICAO,
+            'GRP_TIPOACESSO': ad_GRP_TIPOACESSO,
+            'D_E_L_E_T_': None
+        }
+        db.setdefault('grupos_acesso', []).append(novo_grupo)
+        save_json_db(db)
+        rows = [(ad_GRP_CODIGO, ad_GRP_DESCRICAO, ad_GRP_TIPOACESSO)]
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("grupos_acesso.html", alert="Grupo adicionado com sucesso!", rows=rows)
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        try:
+            cur.execute( "Insert Into GRUPO_ACESSO ( GRP_CODIGO, GRP_DESCRICAO, GRP_TIPOACESSO, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, NULL, 1, NULL);", ( ad_GRP_CODIGO, ad_GRP_DESCRICAO, ad_GRP_TIPOACESSO))
+            conn.commit()
+            rows = [(ad_GRP_CODIGO, ad_GRP_DESCRICAO, ad_GRP_TIPOACESSO)]
+            
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("grupos_acesso.html", alert="Grupo adicionado com sucesso!", rows=rows)
+    
+        except Exception as e:
+            conn.rollback()
+            return render_template("grupos_acesso.html", alert=f"Erro ao cadastrar: {str(e)}")
+        
+        finally:
+            cur.close()
+            conn.close()
+
+@app.route('/dlt_grupo_acesso', methods=['POST'])
+def dlt_grupo_acesso():
+    codigo = request.form.get('codigo')
+
+    if TipConDB == 1:
+        db = load_json_db()
+        for g in db.get('grupos_acesso', []):
+            if str(g.get('GRP_CODIGO')) == str(codigo):
+                g['D_E_L_E_T_'] = '*'
+        save_json_db(db)
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("grupos_acesso.html", alert = "Grupo excluído com sucesso")
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+        try:
+            cur.execute("UPDATE GRUPO_ACESSO SET D_E_L_E_T_ = %s WHERE GRP_CODIGO = %s;", ('*', codigo))
+            conn.commit()
+    
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("grupos_acesso.html", alert = "Grupo excluído com sucesso")
+    
+        except Exception as e:
+            conn.rollback()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("grupos_acesso.html",alert = f"Erro ao excluir grupo: {e}")
+        finally:
+            cur.close()
+            conn.close()
+
+########################    Seção de Usuários   ########################
+
+def max_usr_cod():
+    if TipConDB == 1:
+        db = load_json_db()
+        return max([item.get('USR_CODIGO', 0) for item in db.get('usuarios', [])], default=0)
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT MAX(USR_CODIGO) FROM USUARIOS;")
+    last_usr_cod = cur.fetchone()[0]
+
+    if not last_usr_cod:
+        last_usr_cod = 0
+
+    cur.close()
+    conn.close()
+    return last_usr_cod
+
+@app.route('/add_usuario', methods=['POST'])
+def add_usuario():
+    data = request.form
+    ad_USR_CODIGO    = max_usr_cod() + 1
+    ad_USR_NOME      = data.get('usrNome', '').strip()
+    ad_USR_EMAIL     = data.get('usrEmail', '').strip()
+    ad_USR_TELEFONE  = data.get('usrTelefone', '').strip()
+    ad_USR_GRPCOD    = data.get('usrGrpCod', '').strip()
+
+    if not ad_USR_NOME or not ad_USR_EMAIL or not ad_USR_TELEFONE or not ad_USR_GRPCOD:
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("usuarios.html", alert="Dados incompletos", rows=[])
+    
+    if TipConDB == 1:
+        db = load_json_db()
+        novo_usuario = {
+            'USR_CODIGO': ad_USR_CODIGO,
+            'USR_NOME': ad_USR_NOME,
+            'USR_EMAIL': ad_USR_EMAIL,
+            'USR_TELEFONE': ad_USR_TELEFONE,
+            'USR_GRUPO': ad_USR_GRPCOD,
+            'D_E_L_E_T_': None
+        }
+        db.setdefault('usuarios', []).append(novo_usuario)
+        save_json_db(db)
+        rows = [(ad_USR_CODIGO, ad_USR_NOME, ad_USR_EMAIL, ad_USR_TELEFONE, ad_USR_GRPCOD)]
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("usuarios.html", alert="Usuário adicionado com sucesso!", rows=rows)
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        try:
+            cur.execute( "Insert Into USUARIOS ( USR_CODIGO, USR_NOME, USR_EMAIL, USR_TELEFONE, USR_GRUPO, D_E_L_E_T_, R_E_C_N_O_, R_E_C_D_E_L_) Values ( %s, %s, %s, %s, %s, NULL, 1, NULL);", ( ad_USR_CODIGO, ad_USR_NOME, ad_USR_EMAIL, ad_USR_TELEFONE, ad_USR_GRPCOD))
+            conn.commit()
+            rows = [(ad_USR_CODIGO, ad_USR_NOME, ad_USR_EMAIL, ad_USR_TELEFONE, ad_USR_GRPCOD)]
+            
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("usuarios.html", alert="Usuário adicionado com sucesso!", rows=rows)
+    
+        except Exception as e:
+            conn.rollback()
+            return render_template("usuarios.html", alert=f"Erro ao cadastrar: {str(e)}")
+        
+        finally:
+            cur.close()
+            conn.close()
+
+@app.route('/dlt_usuario', methods=['POST'])
+def dlt_usuario():
+    codigo = request.form.get('codigo')
+
+    if TipConDB == 1:
+        db = load_json_db()
+        for u in db.get('usuarios', []):
+            if str(u.get('USR_CODIGO')) == str(codigo):
+                u['D_E_L_E_T_'] = '*'
+        save_json_db(db)
+        if valid_login() == False:
+            return redirect(url_for("login"))
+        else:
+            return render_template("usuarios.html", alert = "Usuário excluído com sucesso")
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+    
+        try:
+            cur.execute("UPDATE USUARIOS SET D_E_L_E_T_ = %s WHERE USR_CODIGO = %s;", ('*', codigo))
+            conn.commit()
+    
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("usuarios.html", alert = "Usuário excluído com sucesso")
+    
+        except Exception as e:
+            conn.rollback()
+            if valid_login() == False:
+                return redirect(url_for("login"))
+            else:
+                return render_template("usuarios.html",alert = f"Erro ao excluir usuário: {e}")
         finally:
             cur.close()
             conn.close()
