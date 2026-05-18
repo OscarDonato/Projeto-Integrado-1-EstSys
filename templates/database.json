@@ -3,6 +3,27 @@
     "produtos": [],
     "servicos": [],
     "vendas": [],
-    "grupos_acesso": [],
-    "usuarios": []
+    "grupos_acesso": [
+        {
+            "GRP_CODIGO": "1",
+            "GRP_DESCRICAO": "administrador",
+            "GRP_TIPOACESSO": "3",
+            "D_E_L_E_T_": "",
+            "R_E_C_N_O_": "1",
+            "R_E_C_D_E_L_": "0"
+        }
+    ],
+    "usuarios": [
+        {
+            "USR_CODIGO": 1,
+            "USR_NOME": "admin",
+            "USR_EMAIL": "admin@admin.com",
+            "USR_TELEFONE": "00000000000",
+            "USR_GRUPO": "1",
+            "USR_SENHA": "scrypt:32768:8:1$4NBxRWeQFfMCboVW$7d47cf45b9cab6d91c83c61a95bdd2a11a473fdda1334679fbacae09a7ac017dabfcebe798bae8d9293b92af97f4f645c5486acceeefbeea60806e70bd759720",
+            "D_E_L_E_T_": "",
+            "R_E_C_N_O_": "1",
+            "R_E_C_D_E_L_": "0"
+        }
+    ]
 }

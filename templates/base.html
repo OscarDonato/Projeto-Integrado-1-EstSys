@@ -40,7 +40,9 @@
         <nav>
           <ul class="menu">
             {% block itensmenu %}{% endblock %}
-
+            {% if session.get('usuario') == 'admin' or session.get('grupo') == 'administrador' %}
+            <li><a href="/configuracoes" title="Configurações" class="nav-config-link"><i class="bi bi-gear-fill nav-config-icon"></i></a></li>
+            {% endif %}
           </ul>
         </nav>
         <a href="/sair" class="btn_sair">SAIR</a>

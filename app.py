@@ -1,6 +1,7 @@
 import os
 import json
 from flask import Flask, render_template, request, redirect, url_for, session, flash
+from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
@@ -16,7 +17,31 @@ def save_db(data):
 def load_db():
     if not os.path.exists(DB_FILE):
         os.makedirs(os.path.dirname(DB_FILE), exist_ok=True)
-        default_data = {'clientes': [], 'produtos': [], 'servicos': [], 'vendas': [], 'grupos_acesso': [], 'usuarios': []}
+        default_data = {
+            'clientes': [], 
+            'produtos': [], 
+            'servicos': [], 
+            'vendas': [], 
+            'grupos_acesso': [{
+                'GRP_CODIGO': '1', 
+                'GRP_DESCRICAO': 'administrador', 
+                'GRP_TIPOACESSO': '3',
+                'D_E_L_E_T_':'',
+                'R_E_C_N_O_':'1',
+                'R_E_C_D_E_L_':'0'
+            }], 
+            'usuarios': [{
+                'USR_CODIGO': 1, 
+                'USR_NOME': 'admin', 
+                'USR_EMAIL': 'admin@admin.com', 
+                'USR_TELEFONE': '00000000000', 
+                'USR_GRUPO': '1',
+                'USR_SENHA': generate_password_hash('1234'),
+                'D_E_L_E_T_':'',
+                'R_E_C_N_O_':'1',
+                'R_E_C_D_E_L_':'0'
+            }]
+        }
         save_db(default_data)
         return default_data
     with open(DB_FILE, 'r', encoding='utf-8') as f:
@@ -25,12 +50,30 @@ def load_db():
 def get_next_id(db, tabela, id_field='id'):
     return max([int(item.get(id_field, 0) or 0) for item in db.get(tabela, [])], default=0) + 1
 
+# Decorador para verificar se o usuário está logado e tem o nível de acesso necessário
+def login_required(allowed_levels=None):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            if not session.get('logado'):
+                flash('Você precisa estar logado para acessar esta página.', 'warning')
+                return redirect(url_for('login'))
+
+            if allowed_levels:  # Se níveis de acesso específicos são necessários
+                user_access_type = session.get('tipo_acesso')
+                if user_access_type not in allowed_levels:
+                    flash('Você não tem permissão para acessar esta página.', 'danger')
+                    return redirect(url_for('index'))
+
+            return f(*args, **kwargs)
+        return decorated_function
+    return decorator
+
 # Rota principal e index
 @app.route('/')
 @app.route('/index')
+@login_required()
 def index():
-    if not session.get('logado'):
-        return redirect(url_for('login'))
     return render_template('index.html')
 
 # Rotas de Autenticação
@@ -43,16 +86,14 @@ def ver_login():
     usuario = request.form.get('usuario')
     senha = request.form.get('senha')
     
-    # Validação do usuário admin
-    if usuario == 'admin' and senha == '1234':
-        session['logado'] = True
-        return redirect(url_for('index'))
-        
     # Validação pela tabela de usuários no JSON
     db = load_db()
     for u in db.get('usuarios', []):
         if (u.get('USR_NOME') == usuario or u.get('USR_EMAIL') == usuario) and check_password_hash(str(u.get('USR_SENHA', '')), senha):
             session['logado'] = True
+            session['usuario_logado'] = u.get('USR_NOME')
+            grupo_usuario = next((g for g in db.get('grupos_acesso', []) if str(g.get('GRP_CODIGO')) == str(u.get('USR_GRUPO'))), {})
+            session['tipo_acesso'] = str(grupo_usuario.get('GRP_TIPOACESSO', ''))
             return redirect(url_for('index'))
             
     flash('Usuário ou senha inválidos!')
@@ -65,12 +106,13 @@ def sair():
 
 # Rotas de Clientes
 @app.route('/cadastro_clientes')
+@login_required(allowed_levels=['2', '3'])
 def cadastro_clientes():
-    if not session.get('logado'): return redirect(url_for('login'))
     db = load_db()
     return render_template('cadastro_clientes.html', rows=db['clientes'])
 
 @app.route('/add_cliente', methods=['POST'])
+@login_required(allowed_levels=['2', '3'])
 def add_cliente():
     nome = request.form.get('nome')
     email = request.form.get('email')
@@ -83,6 +125,7 @@ def add_cliente():
     return redirect(url_for('cadastro_clientes'))
 
 @app.route('/dlt_cliente', methods=['POST'])
+@login_required(allowed_levels=['2', '3'])
 def dlt_cliente():
     id_cliente = request.form.get('id', type=int)
     db = load_db()
@@ -93,12 +136,13 @@ def dlt_cliente():
 
 # Rotas de Produtos
 @app.route('/cadastro_produtos')
+@login_required(allowed_levels=['2', '3'])
 def cadastro_produtos():
-    if not session.get('logado'): return redirect(url_for('login'))
     db = load_db()
     return render_template('cadastro_produtos.html', rows=db['produtos'])
 
 @app.route('/add_produto', methods=['POST'])
+@login_required(allowed_levels=['2', '3'])
 def add_produto():
     nome = request.form.get('nome')
     preco = request.form.get('preco')
@@ -110,6 +154,7 @@ def add_produto():
     return redirect(url_for('cadastro_produtos'))
 
 @app.route('/dlt_produto', methods=['POST'])
+@login_required(allowed_levels=['2', '3'])
 def dlt_produto():
     id_produto = request.form.get('id', type=int)
     db = load_db()
@@ -120,12 +165,13 @@ def dlt_produto():
 
 # Rotas de Serviços
 @app.route('/cadastro_servicos')
+@login_required(allowed_levels=['2', '3'])
 def cadastro_servicos():
-    if not session.get('logado'): return redirect(url_for('login'))
     db = load_db()
     return render_template('cadastro_servicos.html', rows=db['servicos'])
 
 @app.route('/add_servico', methods=['POST'])
+@login_required(allowed_levels=['2', '3'])
 def add_servico():
     nome = request.form.get('nome')
     preco = request.form.get('preco')
@@ -137,6 +183,7 @@ def add_servico():
     return redirect(url_for('cadastro_servicos'))
 
 @app.route('/dlt_servico', methods=['POST'])
+@login_required(allowed_levels=['2', '3'])
 def dlt_servico():
     id_servico = request.form.get('id', type=int)
     db = load_db()
@@ -147,12 +194,13 @@ def dlt_servico():
 
 # Rotas de Grupos de Acesso
 @app.route('/grupos_acesso')
+@login_required(allowed_levels=['3'])
 def grupos_acesso():
-    if not session.get('logado'): return redirect(url_for('login'))
     db = load_db()
     return render_template('grupos_acesso.html', rows=db.get('grupos_acesso', []))
 
 @app.route('/add_grupo_acesso', methods=['POST'])
+@login_required(allowed_levels=['3'])
 def add_grupo_acesso():
     descricao = request.form.get('descricao')
     tipo_acesso = request.form.get('tipo_acesso')
@@ -168,6 +216,7 @@ def add_grupo_acesso():
     return redirect(url_for('grupos_acesso'))
 
 @app.route('/dlt_grupo_acesso', methods=['POST'])
+@login_required(allowed_levels=['3'])
 def dlt_grupo_acesso():
     id_grupo = request.form.get('id')
     db = load_db()
@@ -178,12 +227,13 @@ def dlt_grupo_acesso():
 
 # Rotas de Usuários
 @app.route('/usuarios')
+@login_required(allowed_levels=['3'])
 def usuarios():
-    if not session.get('logado'): return redirect(url_for('login'))
     db = load_db()
     return render_template('usuarios.html', rows=db.get('usuarios', []))
 
 @app.route('/add_usuario', methods=['POST'])
+@login_required(allowed_levels=['3'])
 def add_usuario():
     nome = request.form.get('usr_nome')
     email = request.form.get('usr_email')
@@ -191,6 +241,10 @@ def add_usuario():
     grupo = request.form.get('usr_grupo')
     senha = request.form.get('usr_senha')
     if nome and email and telefone and grupo and senha:
+        if nome == 'admin' and session.get('usuario_logado') != 'admin':
+            flash('O usuário admin só pode ser alterado por ele mesmo!')
+            return redirect(url_for('usuarios'))
+            
         db = load_db()
         db.setdefault('usuarios', []).append({
             'USR_CODIGO': get_next_id(db, 'usuarios', 'USR_CODIGO'), 
@@ -205,9 +259,17 @@ def add_usuario():
     return redirect(url_for('usuarios'))
 
 @app.route('/dlt_usuario', methods=['POST'])
+@login_required(allowed_levels=['3'])
 def dlt_usuario():
     id_usuario = request.form.get('id', type=int)
     db = load_db()
+    
+    usuario_alvo = next((u for u in db.get('usuarios', []) if int(u.get('USR_CODIGO', 0)) == id_usuario), None)
+    if usuario_alvo and usuario_alvo.get('USR_NOME') == 'admin':
+        if session.get('usuario_logado') != 'admin':
+            flash('O usuário admin só pode ser alterado por ele mesmo!')
+            return redirect(url_for('usuarios'))
+            
     db['usuarios'] = [u for u in db.get('usuarios', []) if int(u.get('USR_CODIGO', 0)) != id_usuario]
     save_db(db)
     flash('Usuário excluído com sucesso!')
@@ -215,20 +277,21 @@ def dlt_usuario():
 
 # Rotas de Vendas e Carrinho
 @app.route('/vendas')
+@login_required(allowed_levels=['2', '3'])
 def vendas():
-    if not session.get('logado'): return redirect(url_for('login'))
     db = load_db()
     return render_template('vendas.html', clientes=db['clientes'], vendas=db['vendas'])
 
 @app.route('/vendas/carrinho')
+@login_required(allowed_levels=['2', '3'])
 def carrinho():
-    if not session.get('logado'): return redirect(url_for('login'))
     cli_nome = request.args.get('cli_nome', 'Cliente não informado')
     db = load_db()
     itens = db['produtos'] + db['servicos']
     return render_template('carrinho.html', cli_nome=cli_nome, rows=itens)
 
 @app.route('/submit_carrinho', methods=['POST'])
+@login_required(allowed_levels=['2', '3'])
 def submit_carrinho():
     cli_nome = request.form.get('cli_nome', 'Desconhecido')
     total = request.form.get('total', '0.00')
