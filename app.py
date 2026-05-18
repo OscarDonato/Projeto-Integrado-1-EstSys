@@ -1,6 +1,7 @@
 import os
 import json
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from datetime import datetime
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -74,7 +75,61 @@ def login_required(allowed_levels=None):
 @app.route('/index')
 @login_required()
 def index():
-    return render_template('index.html')
+    db = load_db()
+    vendas = db.get('vendas', [])
+    
+    mes_filtro = request.args.get('mes', '')
+    
+    if mes_filtro:
+        vendas = [v for v in vendas if str(v.get('data', '')).startswith(mes_filtro)]
+        
+    clientes = db.get('clientes', [])
+    
+    total_clientes = len(clientes)
+    qtd_vendas = len(vendas)
+    
+    faturamento_total = 0.0
+    faturamento_por_cliente = {}
+    
+    produtos_nomes = [p.get('nome') for p in db.get('produtos', [])]
+    servicos_nomes = [s.get('nome') for s in db.get('servicos', [])]
+    
+    qtd_produtos = 0
+    qtd_servicos = 0
+    
+    for v in vendas:
+        try:
+            total_venda = float(v.get('total', 0))
+        except (ValueError, TypeError):
+            total_venda = 0.0
+            
+        faturamento_total += total_venda
+        cliente_nome = v.get('cliente', 'Desconhecido')
+        faturamento_por_cliente[cliente_nome] = faturamento_por_cliente.get(cliente_nome, 0.0) + total_venda
+        
+        for item in v.get('itens', []):
+            try:
+                qtd = int(item.get('quantidade', 1))
+            except (ValueError, TypeError):
+                qtd = 1
+            
+            if item.get('nome') in produtos_nomes:
+                qtd_produtos += qtd
+            elif item.get('nome') in servicos_nomes:
+                qtd_servicos += qtd
+                
+    labels_grafico = json.dumps(list(faturamento_por_cliente.keys()))
+    valores_grafico = json.dumps(list(faturamento_por_cliente.values()))
+    dados_prod_serv = json.dumps([qtd_produtos, qtd_servicos])
+
+    return render_template('index.html', 
+                           total_clientes=total_clientes, 
+                           qtd_vendas=qtd_vendas, 
+                           faturamento_total=faturamento_total,
+                           labels_grafico=labels_grafico,
+                           valores_grafico=valores_grafico,
+                           dados_prod_serv=dados_prod_serv,
+                           mes_filtro=mes_filtro)
 
 # Rotas de Autenticação
 @app.route('/login')
@@ -94,6 +149,7 @@ def ver_login():
             session['usuario_logado'] = u.get('USR_NOME')
             grupo_usuario = next((g for g in db.get('grupos_acesso', []) if str(g.get('GRP_CODIGO')) == str(u.get('USR_GRUPO'))), {})
             session['tipo_acesso'] = str(grupo_usuario.get('GRP_TIPOACESSO', ''))
+            session['grupo_acesso'] = str(grupo_usuario.get('GRP_DESCRICAO', '')).lower()
             return redirect(url_for('index'))
             
     flash('Usuário ou senha inválidos!')
@@ -280,7 +336,13 @@ def dlt_usuario():
 @login_required(allowed_levels=['2', '3'])
 def vendas():
     db = load_db()
-    return render_template('vendas.html', clientes=db['clientes'], vendas=db['vendas'])
+    vendas_list = db.get('vendas', [])
+    busca = request.args.get('busca', '').strip().lower()
+    
+    if busca:
+        vendas_list = [v for v in vendas_list if busca in str(v.get('cliente', '')).lower() or busca == str(v.get('id', ''))]
+        
+    return render_template('vendas.html', clientes=db['clientes'], vendas=vendas_list, busca=busca)
 
 @app.route('/vendas/carrinho')
 @login_required(allowed_levels=['2', '3'])
@@ -295,11 +357,44 @@ def carrinho():
 def submit_carrinho():
     cli_nome = request.form.get('cli_nome', 'Desconhecido')
     total = request.form.get('total', '0.00')
+    itens_json = request.form.get('itens', '[]')
+    
+    try:
+        itens = json.loads(itens_json)
+    except json.JSONDecodeError:
+        itens = []
+
     db = load_db()
-    db['vendas'].append({'id': get_next_id(db, 'vendas'), 'cliente': cli_nome, 'total': total})
+    data_venda = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    db['vendas'].append({'id': get_next_id(db, 'vendas'), 'cliente': cli_nome, 'total': total, 'itens': itens, 'data': data_venda})
     save_db(db)
     flash(f'Venda para o cliente {cli_nome} finalizada!')
     return redirect(url_for('vendas'))
+
+@app.route('/venda_detalhe/<int:id_venda>')
+@login_required(allowed_levels=['2', '3'])
+def venda_detalhe(id_venda):
+    db = load_db()
+    # Busca a venda pelo ID
+    venda = next((v for v in db.get('vendas', []) if int(v.get('id', 0)) == id_venda), None)
+    
+    if not venda:
+        flash('Venda não encontrada.', 'danger')
+        return redirect(url_for('vendas'))
+        
+    return render_template('venda_detalhe.html', venda=venda)
+
+@app.route('/api/vendas')
+@login_required(allowed_levels=['2', '3'])
+def api_vendas():
+    db = load_db()
+    vendas_list = db.get('vendas', [])
+    busca = request.args.get('busca', '').strip().lower()
+    
+    if busca:
+        vendas_list = [v for v in vendas_list if busca in str(v.get('cliente', '')).lower() or busca == str(v.get('id', ''))]
+        
+    return jsonify(vendas_list)
 
 if __name__ == '__main__':
     # Executa o servidor Flask na porta 5000 com reinício automático

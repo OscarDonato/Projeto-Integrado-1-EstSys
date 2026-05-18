@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block itensmenu %}
-            <li><a href="/vendas">VENDAS</a></li>
-            <li><a href="/cadastro_produtos">CADASTROS</a></li>
+            <li><a href="{{ url_for('vendas') }}" class="{% if request.endpoint == 'vendas' %}ativo{% endif %}">VENDAS</a></li>
+            <li><a href="{{ url_for('cadastro_produtos') }}" class="{% if request.endpoint in ['cadastro_produtos', 'cadastro_clientes', 'cadastro_servicos'] %}ativo{% endif %}">CADASTROS</a></li>
 {% endblock %}
 
 {% block content %}
@@ -39,14 +39,24 @@
               <tbody id="client-list">
                 {% for row in rows %}
                 <tr>
-                  {% for item in row %}
-                    <td>{{ item }}</td>
-                  {% endfor %}
-                    <td class="spec"><form method="POST" action="/dlt_venda">
+                  <td>{{ row[0] }}</td>
+                  <td>{{ row[1] }}</td>
+                  <td>{{ row[2] }}</td>
+                  <td>{{ row[3] }}</td>
+                  <td>{{ "%.2f"|format(row[4]|float)|replace('.', ',') }}</td>
+                  <td>
+                    {% if row[5] and row[5]|length >= 10 %}
+                      {{ row[5][8:10] }}/{{ row[5][5:7] }}/{{ row[5][0:4] }} {{ row[5][11:16] }}
+                    {% else %}
+                      {{ row[5] }}
+                    {% endif %}
+                  </td>
+                  <td class="spec">
+                    <form method="POST" action="/dlt_venda">
                       <input type="hidden" name="codigo" value="{{ row[0] }}">
-                        <button type="submit" class="delete-btn">X</button>
-                        </form>                    
-                    </td>
+                      <button type="submit" class="delete-btn">X</button>
+                    </form>                    
+                  </td>
                 </tr>
                 {% endfor %}
               </tbody>

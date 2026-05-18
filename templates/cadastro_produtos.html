@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
 {% block itensmenu %}
-            <li><a href="/cadastro_produtos">PRODUTOS</a></li>
-            <li><a href="/cadastro_clientes">CLIENTES</a></li>
-            <li><a href="/cadastro_servicos">SERVIÇOS</a></li>
+            <li><a href="{{ url_for('cadastro_produtos') }}" class="{% if request.endpoint == 'cadastro_produtos' %}ativo{% endif %}">PRODUTOS</a></li>
+            <li><a href="{{ url_for('cadastro_clientes') }}" class="{% if request.endpoint == 'cadastro_clientes' %}ativo{% endif %}">CLIENTES</a></li>
+            <li><a href="{{ url_for('cadastro_servicos') }}" class="{% if request.endpoint == 'cadastro_servicos' %}ativo{% endif %}">SERVIÇOS</a></li>
 {% endblock %}
 
 {% block content %}

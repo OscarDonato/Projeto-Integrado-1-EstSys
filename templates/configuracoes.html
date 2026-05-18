@@ -90,11 +90,20 @@
                 <div class="form-group">
                     <p><strong>Como salvar os dados?</strong></p>
                     <label>
-                        <input type="radio" name="tipcondb" value="1" {% if TipConDB == 1 %}checked{% endif %}> Usar aplicação/memoria
+                        <input type="radio" name="tipcondb" value="1" {% if TipConDB == 1 %}checked{% endif %} onchange="toggleDBConfig()"> Usar aplicação/memoria
                     </label><br><br>
                     <label>
-                        <input type="radio" name="tipcondb" value="2" {% if TipConDB == 2 %}checked{% endif %}> Usar DB Postgre
+                        <input type="radio" name="tipcondb" value="2" {% if TipConDB == 2 %}checked{% endif %} onchange="toggleDBConfig()"> Usar DB Postgre
                     </label>
+                </div>
+
+                <div id="db-settings" class="form-group" style="display: {% if TipConDB == 2 %}block{% else %}none{% endif %};">
+                    <p><strong>Configuração do Banco de Dados:</strong></p>
+                    <label for="db_ip">IP:</label>
+                    <input type="text" id="db_ip" name="db_ip" value="{{ db_ip if db_ip else 'localhost' }}" style="padding: 8px; margin-right: 10px; border: 1px solid #adb5bd; border-radius: 4px;">
+                    
+                    <label for="db_port">Porta:</label>
+                    <input type="text" id="db_port" name="db_port" value="{{ db_port if db_port else '5555' }}" style="padding: 8px; border: 1px solid #adb5bd; border-radius: 4px; width: 80px;">
                 </div>
                 <button type="submit" class="btn-salvar">Salvar Configurações</button>
             </form>
@@ -126,6 +135,16 @@
             }
             document.getElementById(tabName).classList.add("active");
             evt.currentTarget.classList.add("active");
+        }
+
+        function toggleDBConfig() {
+            var tipcondb = document.querySelector('input[name="tipcondb"]:checked').value;
+            var dbSettings = document.getElementById('db-settings');
+            if (tipcondb == '2') {
+                dbSettings.style.display = 'block';
+            } else {
+                dbSettings.style.display = 'none';
+            }
         }
     </script>
 </body>
