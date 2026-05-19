@@ -99,11 +99,17 @@
 
                 <div id="db-settings" class="form-group" style="display: {% if TipConDB == 2 %}block{% else %}none{% endif %};">
                     <p><strong>Configuração do Banco de Dados:</strong></p>
-                    <label for="db_ip">IP:</label>
-                    <input type="text" id="db_ip" name="db_ip" value="{{ db_ip if db_ip else 'localhost' }}" style="padding: 8px; margin-right: 10px; border: 1px solid #adb5bd; border-radius: 4px;">
+                    <label for="db_host">IP do Banco (Host):</label>
+                    <input type="text" id="db_host" name="db_host" value="{{ db_host }}" style="padding: 8px; margin-right: 10px; border: 1px solid #adb5bd; border-radius: 4px;">
                     
                     <label for="db_port">Porta:</label>
-                    <input type="text" id="db_port" name="db_port" value="{{ db_port if db_port else '5555' }}" style="padding: 8px; border: 1px solid #adb5bd; border-radius: 4px; width: 80px;">
+                    <input type="text" id="db_port" name="db_port" value="{{ db_port }}" style="padding: 8px; margin-right: 10px; border: 1px solid #adb5bd; border-radius: 4px; width: 80px;"><br><br>
+
+                    <label for="db_user">Usuário DB:</label>
+                    <input type="text" name="db_user" id="db_user" value="{{ db_user }}" style="padding: 8px; margin-right: 10px; border: 1px solid #adb5bd; border-radius: 4px;">
+
+                    <label for="db_pass">Senha DB:</label>
+                    <input type="password" name="db_pass" id="db_pass" value="{{ db_pass }}" style="padding: 8px; border: 1px solid #adb5bd; border-radius: 4px;">
                 </div>
                 <button type="submit" class="btn-salvar">Salvar Configurações</button>
             </form>
@@ -147,5 +153,29 @@
             }
         }
     </script>
+
+    {% if success %}
+    <!-- Alerta modal nativo -->
+    <dialog id="modalSucesso" style="padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px; text-align: center;">
+        <h3 style="color: #28a745; margin-top: 0;">Sucesso!</h3>
+        <p>As configurações do sistema foram salvas com sucesso.</p>
+        <button onclick="document.getElementById('modalSucesso').close()" style="padding: 8px 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px;">Ok</button>
+    </dialog>
+    <script>
+        document.getElementById('modalSucesso').showModal();
+    </script>
+    {% endif %}
+
+    {% if error %}
+    <!-- Alerta modal nativo para erros -->
+    <dialog id="modalErro" style="padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; text-align: center;">
+        <h3 style="color: #dc3545; margin-top: 0;">Erro ao Salvar!</h3>
+        <p>{{ error }}</p>
+        <button onclick="document.getElementById('modalErro').close()" style="padding: 8px 16px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 4px;">Ok</button>
+    </dialog>
+    <script>
+        document.getElementById('modalErro').showModal();
+    </script>
+    {% endif %}
 </body>
 </html>

@@ -4,6 +4,7 @@ import psycopg2
 import os
 import json
 from datetime import datetime
+from dotenv import load_dotenv, set_key
 
 app = Flask(__name__)
 CORS(app)
@@ -32,14 +33,17 @@ def load_json_db():
 
 # Rotas das páginas
 
-DB_HOST = "localhost"
-DB_NAME = "estetsys"
-DB_USER = "estetsys"
-DB_PASS = "estetsys"
+ENV_FILE = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(ENV_FILE)
 
-# Função para conectar ao banco de dados do Estetsys como 
+# Função para conectar ao banco de dados do Estetsys
 def get_db_connection():
-    conn = psycopg2.connect(host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS)
+    db_host = os.getenv("DB_HOST", "localhost")
+    db_port = os.getenv("DB_PORT", "5432")
+    db_name = os.getenv("DB_NAME", "estetsys")
+    db_user = os.getenv("DB_USER", "estetsys")
+    db_pass = os.getenv("DB_PASS", "estetsys")
+    conn = psycopg2.connect(host=db_host, port=db_port, database=db_name, user=db_user, password=db_pass)
     return conn
 
 def valid_login():
@@ -84,13 +88,36 @@ def configuracoes():
     if valid_login() == False:
         return redirect(url_for("login"))
         
+    success = False
     if request.method == 'POST':
         try:
             TipConDB = int(request.form.get('tipcondb'))
+            
+            db_host = request.form.get('db_host')
+            db_port = request.form.get('db_port')
+            db_user = request.form.get('db_user')
+            db_pass = request.form.get('db_pass')
+            
+            if not os.path.exists(ENV_FILE):
+                open(ENV_FILE, 'w').close()
+                
+            if db_host: set_key(ENV_FILE, "DB_HOST", db_host)
+            if db_port: set_key(ENV_FILE, "DB_PORT", db_port)
+            if db_user: set_key(ENV_FILE, "DB_USER", db_user)
+            if db_pass: set_key(ENV_FILE, "DB_PASS", db_pass)
+            
+            load_dotenv(ENV_FILE, override=True) # Força a releitura das novas variáveis no SO
+            success = True
         except (ValueError, TypeError):
             pass
             
-    return render_template('configuracoes.html', TipConDB=TipConDB)
+    return render_template('configuracoes.html', 
+                           TipConDB=TipConDB, 
+                           success=success,
+                           db_host=os.getenv("DB_HOST", "localhost"),
+                           db_port=os.getenv("DB_PORT", "5432"),
+                           db_user=os.getenv("DB_USER", "estetsys"),
+                           db_pass=os.getenv("DB_PASS", "estetsys"))
 
 @app.route('/cadastro_clientes')
 def dir_cadastro_clientes():
