@@ -384,6 +384,11 @@ def venda_detalhe(id_venda):
         
     return render_template('venda_detalhe.html', venda=venda)
 
+@app.route('/configuracoes', methods=['GET', 'POST'])
+@login_required(allowed_levels=['3'])
+def configuracoes():
+    return render_template('configuracoes.html')
+
 @app.route('/api/vendas')
 @login_required(allowed_levels=['2', '3'])
 def api_vendas():
