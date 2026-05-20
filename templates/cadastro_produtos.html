@@ -11,34 +11,35 @@
         <section id="products">
           <h2>PRODUTOS<br /></h2>
           <form id="productForm" class="formul" method="POST" action="/add_produto">
-            <input 
-              type="text" 
-              name="productID" 
-              placeholder="Campo apenas de busca - ID do produto" 
-            />
             <input
               type="text"
-              name="productName"
+              name="nome"
               placeholder="Nome do Produto"
+              required
             />
             <input 
               type="text" 
-              name="productDesc" 
+              name="descricao" 
               placeholder="Descrição" 
             />
             <input
               type="number"
-              name="productPrice"
+              name="preco"
               placeholder="Preço"
               step="0.01"
+              required
             />
             <div class="form_buttons">
-              <button type="submit" formaction="/proc_prd" formmethod="get" class="addItem">Procurar Produto</button>
               <button type="submit" class="addItem">Adicione um produto</button>
             </div>
           </form>
 
-          
+          <div class="search-container" style="margin-top: 20px; margin-bottom: 20px; display: flex; gap: 10px;">
+            <input type="text" id="searchProductId" placeholder="Buscar por ID" style="padding: 8px; border: 1px solid #adb5bd; border-radius: 4px; flex: 1;" />
+            <input type="text" id="searchProductName" placeholder="Buscar por Nome" style="padding: 8px; border: 1px solid #adb5bd; border-radius: 4px; flex: 2;" />
+            <button type="button" class="addItem" onclick="buscarProdutosAsync()">Procurar Produto</button>
+            <button type="button" class="addItem" style="background-color: #6c757d;" onclick="limparBuscaProdutos()">Limpar</button>
+          </div>
 
           <table class="display_table">
             <thead>
@@ -51,20 +52,74 @@
               </tr>
             </thead>
             <tbody id="product-list">
+              {% if rows %}
               {% for row in rows %}
               <tr>
-                {% for item in row %}
-                  <td>{{ item }}</td>
-                {% endfor %}
+                <td>{{ row.id if row.id else row[0] }}</td>
+                <td>{{ row.nome if row.nome else row[1] }}</td>
+                <td>{{ row.preco if row.preco else row[2] }}</td>
+                <td>{{ row.descricao if row.descricao else row[3] }}</td>
                 <td class="dltitem-btn"><form method="POST" action="/dlt_produto">
-                    <input type="hidden" name="codigo" value="{{ row[0] }}">
+                    <input type="hidden" name="id" value="{{ row.id if row.id else row[0] }}">
                       <button type="submit" class="delete-btn">X</button>
                       </form>                    
                   </td>
               </tr>
               {% endfor %}
+              {% else %}
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 15px; color: #666;">Nenhum produto encontrado.</td>
+              </tr>
+              {% endif %}
             </tbody>
           </table>
         </section>
       </div>
+
+<script>
+function buscarProdutosAsync() {
+  const id = document.getElementById('searchProductId').value;
+  const nome = document.getElementById('searchProductName').value;
+  
+  const params = new URLSearchParams();
+  if (id) params.append('productID', id);
+  if (nome) params.append('productName', nome);
+
+  fetch(`/api/produtos?${params.toString()}`)
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.getElementById('product-list');
+      tbody.innerHTML = '';
+      
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px; color: #666;">Nenhum produto encontrado.</td></tr>';
+        return;
+      }
+
+      data.forEach(produto => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${produto.id || ''}</td>
+          <td>${produto.nome || ''}</td>
+          <td>${produto.preco || ''}</td>
+          <td>${produto.descricao || ''}</td>
+          <td class="dltitem-btn">
+            <form method="POST" action="/dlt_produto">
+              <input type="hidden" name="id" value="${produto.id}">
+              <button type="submit" class="delete-btn">X</button>
+            </form>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(error => console.error('Erro ao buscar produtos:', error));
+}
+
+function limparBuscaProdutos() {
+  document.getElementById('searchProductId').value = '';
+  document.getElementById('searchProductName').value = '';
+  buscarProdutosAsync();
+}
+</script>
 {% endblock %}

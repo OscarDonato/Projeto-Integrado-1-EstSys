@@ -11,25 +11,31 @@
         <section id="services">
           <h2>SERVIÇOS</h2>
           <form id="serviceForm" class="formul" method="POST" action="/add_servico">
-            <input type="text" name="srvID" placeholder="Somente para busca - ID do serviço" />
-            <input type="text" name="serviceName" placeholder="Nome do serviço" />
+            <input type="text" name="nome" placeholder="Nome do serviço" required />
             <input
               type="text"
-              name="serviceDesc"
+              name="descricao"
               placeholder="Descrição do serviço"
             />
             <input
               type="number"
-              name="servicePrice"
+              name="preco"
               placeholder="Preço"
               step="0.01"
+              required
             />
 
             <div class="form_buttons">
-              <button type="submit" formaction="/proc_srv" formmethod="get" class="addItem">Procurar Serviço</button>
               <button type="submit" class="addItem">Adicione um Serviço</button>
             </div>
           </form>
+
+          <div class="search-container" style="margin-top: 20px; margin-bottom: 20px; display: flex; gap: 10px;">
+            <input type="text" id="searchServiceId" placeholder="Buscar por ID" style="padding: 8px; border: 1px solid #adb5bd; border-radius: 4px; flex: 1;" />
+            <input type="text" id="searchServiceName" placeholder="Buscar por Nome" style="padding: 8px; border: 1px solid #adb5bd; border-radius: 4px; flex: 2;" />
+            <button type="button" class="addItem" onclick="buscarServicosAsync()">Procurar Serviço</button>
+            <button type="button" class="addItem" style="background-color: #6c757d;" onclick="limparBuscaServicos()">Limpar</button>
+          </div>
 
           <table class="display_table">
             <thead>
@@ -43,21 +49,75 @@
             </thead>
             
             <tbody id="service-list">
+              {% if rows %}
               {% for row in rows %}
               <tr>
-                {% for item in row %}
-                  <td>{{ item }}</td>
-                {% endfor %}
+                <td>{{ row.id if row.id else row[0] }}</td>
+                <td>{{ row.nome if row.nome else row[1] }}</td>
+                <td>{{ row.preco if row.preco else row[2] }}</td>
+                <td>{{ row.descricao if row.descricao else row[3] }}</td>
                 <td class="dltitem-btn">
                     <form method="POST" action="/dlt_servico">
-                      <input type="hidden" name="codigo" value="{{ row[0] }}">
+                      <input type="hidden" name="id" value="{{ row.id if row.id else row[0] }}">
                       <button type="submit" class="delete-btn">X</button>
                     </form>                    
                   </td>
               </tr>
               {% endfor %}
+              {% else %}
+              <tr>
+                <td colspan="5" style="text-align: center; padding: 15px; color: #666;">Nenhum serviço encontrado.</td>
+              </tr>
+              {% endif %}
             </tbody>
           </table>
         </section>
       </div>
+
+<script>
+function buscarServicosAsync() {
+  const id = document.getElementById('searchServiceId').value;
+  const nome = document.getElementById('searchServiceName').value;
+  
+  const params = new URLSearchParams();
+  if (id) params.append('srvID', id);
+  if (nome) params.append('serviceName', nome);
+
+  fetch(`/api/servicos?${params.toString()}`)
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.getElementById('service-list');
+      tbody.innerHTML = '';
+      
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px; color: #666;">Nenhum serviço encontrado.</td></tr>';
+        return;
+      }
+
+      data.forEach(servico => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${servico.id || ''}</td>
+          <td>${servico.nome || ''}</td>
+          <td>${servico.preco || ''}</td>
+          <td>${servico.descricao || ''}</td>
+          <td class="dltitem-btn">
+            <form method="POST" action="/dlt_servico">
+              <input type="hidden" name="id" value="${servico.id}">
+              <button type="submit" class="delete-btn">X</button>
+            </form>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(error => console.error('Erro ao buscar serviços:', error));
+}
+
+function limparBuscaServicos() {
+  document.getElementById('searchServiceId').value = '';
+  document.getElementById('searchServiceName').value = '';
+  buscarServicosAsync();
+}
+</script>
 {% endblock %}

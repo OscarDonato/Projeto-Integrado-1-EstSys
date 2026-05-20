@@ -10,45 +10,138 @@
     <section id="clients">
       <h2>CLIENTES<br /></h2>
       <form id="customerForm" class="formul" method="POST" action="/add_cliente">
-        <!-- Antes era onsubmit="addClient(event)" -->
-        <input type="text" name="clientName" placeholder="Nome do Cliente" />
-        <input type="text" name="clientCPF" placeholder="CPF (xxx.xxx.xxx-xx)" maxlength="14"/>
-        <input type="text" name="clientPhone" placeholder="Celular (xx) xxxxx-xxxx"maxlength="15"/>
-        <input type="text" name="clientCEP" placeholder="CEP (xxxxx-xxx)" maxlength="9" />
-        <input type="text" name="clientAddress" placeholder="Endereço" />
-        <input type="text" name="clientComplement" placeholder="Complemento"/>
-        <input type="text" name="clientNote" placeholder="Observações (opcional)"/>
+        <input type="text" name="nome" placeholder="Nome do Cliente" required />
+        <input type="text" name="email" placeholder="E-mail ou Documento (CPF/CNPJ)" required />
+        <input type="text" name="telefone" placeholder="Telefone" />
         <div class="form_buttons">
-          <button type="submit" formaction="/proc_cliente" formmethod="get" class="addItem">Procurar Cliente</button>
           <button type="submit" class="addItem">Adicione um cliente</button>
         </div>
       </form>
 
+      <div class="search-container" style="margin-top: 20px; margin-bottom: 20px; display: flex; gap: 10px;">
+        <input type="text" id="searchId" placeholder="Buscar por ID" style="padding: 8px; border: 1px solid #adb5bd; border-radius: 4px; flex: 1;" />
+        <input type="text" id="searchName" placeholder="Buscar por Nome" style="padding: 8px; border: 1px solid #adb5bd; border-radius: 4px; flex: 2;" />
+        <button type="button" class="addItem" onclick="buscarClientesAsync()">Procurar Cliente</button>
+        <button type="button" class="addItem" style="background-color: #6c757d;" onclick="limparBusca()">Limpar</button>
+      </div>
+
       <table class="display_table">
         <thead>
           <tr>
+            <th>ID</th>
             <th>Nome</th>
-            <th>CPF</th>
+            <th>E-mail / Doc</th>
             <th>Telefone</th>
-            <th>Observações</th>
-            <th>Excluir</th>
+            <th>Ações</th>
           </tr>
         </thead>
         <tbody id="client-list">
+          {% if rows %}
           {% for row in rows %}
           <tr>
-            {% for item in row %}
-              <td>{{ item }}</td>
-            {% endfor %}
-              <td class="dltitem-btn"><form method="POST" action="/dlt_cliente">
-                <input type="hidden" name="codigo" value="{{ row[1] }}">
+              <td>{{ row.id }}</td>
+              <td>{{ row.nome }}</td>
+              <td>{{ row.email }}</td>
+              <td>{{ row.telefone }}</td>
+              <td class="dltitem-btn" style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+                <button type="button" class="addItem" style="background-color: #ffc107; color: #333; padding: 5px 10px; margin: 0; min-width: auto;" onclick="abrirModalEditar('{{ row.id }}', '{{ row.nome }}', '{{ row.email }}', '{{ row.telefone }}')">Editar</button>
+                <form method="POST" action="/dlt_cliente" style="margin: 0;">
+                  <input type="hidden" name="id" value="{{ row.id }}">
                   <button type="submit" class="delete-btn">X</button>
-                  </form>                    
+                </form>                    
               </td>
           </tr>
           {% endfor %}
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 15px; color: #666;">Nenhum cliente encontrado no banco de dados.</td>
+          </tr>
+          {% endif %}
         </tbody>
       </table>
     </section>
   </div>
+
+<!-- Modal de Edição de Cliente -->
+<div id="editModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+  <div style="background:#fff; padding:20px; border-radius:8px; width:400px; max-width:90%;">
+    <h3 style="margin-top: 0;">Editar Cliente</h3>
+    <form id="editForm" method="POST" action="/update_cliente">
+      <input type="hidden" id="editId" name="id" />
+      <label>Nome:</label>
+      <input type="text" id="editNome" name="nome" placeholder="Nome" required style="width:100%; margin-bottom:10px; padding:8px; border: 1px solid #adb5bd; border-radius: 4px;" />
+      <label>E-mail / Doc:</label>
+      <input type="text" id="editEmail" name="email" placeholder="E-mail / Doc" required style="width:100%; margin-bottom:10px; padding:8px; border: 1px solid #adb5bd; border-radius: 4px;" />
+      <label>Telefone:</label>
+      <input type="text" id="editTelefone" name="telefone" placeholder="Telefone" style="width:100%; margin-bottom:10px; padding:8px; border: 1px solid #adb5bd; border-radius: 4px;" />
+      <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 10px;">
+        <button type="button" onclick="fecharModalEditar()" style="padding:8px 15px; cursor:pointer; background-color: #6c757d; color: #fff; border: none; border-radius: 4px;">Cancelar</button>
+        <button type="submit" style="padding:8px 15px; cursor:pointer; background-color:#28a745; color:#fff; border:none; border-radius:4px;">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function buscarClientesAsync() {
+  const id = document.getElementById('searchId').value;
+  const nome = document.getElementById('searchName').value;
+  
+  const params = new URLSearchParams();
+  if (id) params.append('clientID', id);
+  if (nome) params.append('clientName', nome);
+
+  fetch(`/api/clientes?${params.toString()}`)
+    .then(response => response.json())
+    .then(data => {
+      const tbody = document.getElementById('client-list');
+      tbody.innerHTML = '';
+      
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 15px; color: #666;">Nenhum cliente encontrado.</td></tr>';
+        return;
+      }
+
+      data.forEach(cliente => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${cliente.id || ''}</td>
+          <td>${cliente.nome || ''}</td>
+          <td>${cliente.email || ''}</td>
+          <td>${cliente.telefone || ''}</td>
+          <td class="dltitem-btn" style="display: flex; gap: 5px; justify-content: center; align-items: center;">
+            <button type="button" class="addItem" style="background-color: #ffc107; color: #333; padding: 5px 10px; margin: 0; min-width: auto;" onclick="abrirModalEditar('${cliente.id}', '${cliente.nome}', '${cliente.email}', '${cliente.telefone}')">Editar</button>
+            <form method="POST" action="/dlt_cliente" style="margin: 0;">
+              <input type="hidden" name="id" value="${cliente.id}">
+              <button type="submit" class="delete-btn">X</button>
+            </form>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(error => {
+      console.error('Erro ao buscar clientes:', error);
+      alert('Ocorreu um erro ao buscar clientes.');
+    });
+}
+
+function limparBusca() {
+  document.getElementById('searchId').value = '';
+  document.getElementById('searchName').value = '';
+  buscarClientesAsync(); // Recarrega a tabela com todos os dados
+}
+
+function abrirModalEditar(id, nome, email, telefone) {
+  document.getElementById('editId').value = id;
+  document.getElementById('editNome').value = nome !== 'undefined' ? nome : '';
+  document.getElementById('editEmail').value = email !== 'undefined' ? email : '';
+  document.getElementById('editTelefone').value = telefone !== 'undefined' ? telefone : '';
+  document.getElementById('editModal').style.display = 'flex';
+}
+
+function fecharModalEditar() {
+  document.getElementById('editModal').style.display = 'none';
+}
+</script>
 {% endblock %}

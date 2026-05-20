@@ -165,17 +165,5 @@
         document.getElementById('modalSucesso').showModal();
     </script>
     {% endif %}
-
-    {% if error %}
-    <!-- Alerta modal nativo para erros -->
-    <dialog id="modalErro" style="padding: 20px; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 400px; text-align: center;">
-        <h3 style="color: #dc3545; margin-top: 0;">Erro ao Salvar!</h3>
-        <p>{{ error }}</p>
-        <button onclick="document.getElementById('modalErro').close()" style="padding: 8px 16px; cursor: pointer; background: #dc3545; color: white; border: none; border-radius: 4px;">Ok</button>
-    </dialog>
-    <script>
-        document.getElementById('modalErro').showModal();
-    </script>
-    {% endif %}
 </body>
 </html>

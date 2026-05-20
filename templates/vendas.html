@@ -41,9 +41,9 @@
                 <tr>
                   <td>{{ row[0] }}</td>
                   <td>{{ row[1] }}</td>
-                  <td>{{ row[2] }}</td>
+                  <td>{{ row[2] | formata_cpf }}</td>
                   <td>{{ row[3] }}</td>
-                  <td>{{ "%.2f"|format(row[4]|float)|replace('.', ',') }}</td>
+                  <td>{{ row[4] | formata_moeda }}</td>
                   <td>
                     {% if row[5] and row[5]|length >= 10 %}
                       {{ row[5][8:10] }}/{{ row[5][5:7] }}/{{ row[5][0:4] }} {{ row[5][11:16] }}

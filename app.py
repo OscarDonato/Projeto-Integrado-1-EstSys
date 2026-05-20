@@ -1,12 +1,22 @@
 import os
 import json
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, Response
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
+import re
+import smtplib
+from email.message import EmailMessage
+from dotenv import load_dotenv, set_key
 
 app = Flask(__name__)
 app.secret_key = "chave_super_secreta_projeto"
+
+# Carrega as variáveis de ambiente do arquivo .env
+ENV_FILE = os.path.join(os.path.dirname(__file__), '.env')
+load_dotenv(ENV_FILE)
 
 # Caminho do arquivo JSON
 DB_FILE = os.path.join(os.path.dirname(__file__), 'templates', 'database.json')
@@ -50,6 +60,93 @@ def load_db():
 
 def get_next_id(db, tabela, id_field='id'):
     return max([int(item.get(id_field, 0) or 0) for item in db.get(tabela, [])], default=0) + 1
+
+def alertar_falha_banco_por_email(mensagem_erro):
+    email_destino = os.getenv("ALERT_EMAIL")
+    if not email_destino:
+        print("[Alerta] E-mail de destino não configurado nas configurações.")
+        return
+
+    msg = EmailMessage()
+    msg.set_content(f"Ocorreu uma falha crítica na sincronização com o Postgres:\n\n{mensagem_erro}")
+    msg['Subject'] = "ALERTA: Falha de Banco de Dados - EstSys"
+    msg['From'] = os.getenv("EMAIL_SENDER", "seu_email_remetente@gmail.com")
+    msg['To'] = email_destino
+    
+    try:
+        # Exemplo usando SMTP do Gmail (ajuste EMAIL_SENDER e EMAIL_PASSWORD no seu .env para contas reais)
+        server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        server.login(os.getenv("EMAIL_SENDER", "seu_email_remetente@gmail.com"), os.getenv("EMAIL_PASSWORD", "senha_de_app"))
+        server.send_message(msg)
+        server.quit()
+        print(f"[Alerta] E-mail enviado com sucesso para {email_destino}.")
+    except Exception as e:
+        print(f"[Alerta] Erro ao tentar enviar o alerta por e-mail: {e}")
+
+# --- SISTEMA DE SINCRONIZAÇÃO ASSÍNCRONA ---
+def sync_json_to_postgres():
+    """
+    Função executada em background periodicamente para enviar dados 
+    do database.json (memória) para o banco PostgreSQL.
+    """
+    print("[Sync] Iniciando sincronização do JSON para o PostgreSQL...")
+    try:
+        # db = load_db()
+        # conn = get_db_connection() # Requer a função definida em outro escopo
+        # cur = conn.cursor()
+        
+        # Exemplo de lógica UPSERT (INSERT ON CONFLICT) para a tabela de clientes
+        # for c in db.get('clientes', []):
+        #     cur.execute("""
+        #         INSERT INTO CLIENTE (CLI_CODIGO, CLI_NOME, CLI_DOC, CLI_TEL)
+        #         VALUES (%s, %s, %s, %s)
+        #         ON CONFLICT (CLI_CODIGO) DO UPDATE SET 
+        #             CLI_NOME = EXCLUDED.CLI_NOME,
+        #             CLI_DOC = EXCLUDED.CLI_DOC,
+        #             CLI_TEL = EXCLUDED.CLI_TEL;
+        #     """, (c.get('id'), c.get('nome'), c.get('email'), c.get('telefone')))
+        
+        # conn.commit()
+        # cur.close()
+        # conn.close()
+        print("[Sync] Sincronização concluída com sucesso!")
+    except Exception as e:
+        print(f"[Sync] Erro na sincronização: {e}")
+        alertar_falha_banco_por_email(str(e))
+
+# Inicializa o Scheduler para rodar em segundo plano (ex: a cada 60 minutos)
+scheduler = BackgroundScheduler(daemon=True)
+scheduler.add_job(func=sync_json_to_postgres, trigger="interval", minutes=60)
+scheduler.start()
+atexit.register(lambda: scheduler.shutdown())  # Desliga o scheduler ao fechar a aplicação
+
+# --- FILTROS CUSTOMIZADOS PARA TEMPLATES HTML (JINJA2) ---
+@app.template_filter('formata_moeda')
+def formata_moeda(valor):
+    try:
+        return f"R$ {float(valor):,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.')
+    except (ValueError, TypeError):
+        return valor
+
+# Filtro para formatação de telefone (Ex: 11999998888 -> (11) 99999-8888)
+@app.template_filter('formata_telefone')
+def formata_telefone(valor):
+    if not valor: return valor
+    v = re.sub(r'\D', '', str(valor))
+    if len(v) == 11:
+        return f"({v[:2]}) {v[2:7]}-{v[7:]}"
+    elif len(v) == 10:
+        return f"({v[:2]}) {v[2:6]}-{v[6:]}"
+    return valor
+
+# Filtro para formatação de CPF (Ex: 12345678900 -> 123.456.789-00)
+@app.template_filter('formata_cpf')
+def formata_cpf(valor):
+    if not valor: return valor
+    v = re.sub(r'\D', '', str(valor))
+    if len(v) == 11:
+        return f"{v[:3]}.{v[3:6]}.{v[6:9]}-{v[9:]}"
+    return valor
 
 # Decorador para verificar se o usuário está logado e tem o nível de acesso necessário
 def login_required(allowed_levels=None):
@@ -387,19 +484,337 @@ def venda_detalhe(id_venda):
 @app.route('/configuracoes', methods=['GET', 'POST'])
 @login_required(allowed_levels=['3'])
 def configuracoes():
-    return render_template('configuracoes.html')
+    global TipConDB
+    success = False
+    if request.method == 'POST':
+        try:
+            TipConDB = int(request.form.get('tipcondb'))
+            
+            db_host = request.form.get('db_host')
+            db_port = request.form.get('db_port')
+            db_user = request.form.get('db_user')
+            db_pass = request.form.get('db_pass')
+            alert_email = request.form.get('alert_email')
+            
+            if not os.path.exists(ENV_FILE):
+                open(ENV_FILE, 'w').close()
+                
+            if db_host: set_key(ENV_FILE, "DB_HOST", db_host)
+            if db_port: set_key(ENV_FILE, "DB_PORT", db_port)
+            if db_user: set_key(ENV_FILE, "DB_USER", db_user)
+            if db_pass: set_key(ENV_FILE, "DB_PASS", db_pass)
+            if alert_email: set_key(ENV_FILE, "ALERT_EMAIL", alert_email)
+            
+            load_dotenv(ENV_FILE, override=True)
+            success = True
+            flash('Configurações atualizadas com sucesso!', 'success')
+        except (ValueError, TypeError):
+            flash('Erro ao atualizar configurações.', 'danger')
+            
+    return render_template('configuracoes.html', 
+                           TipConDB=TipConDB, 
+                           success=success,
+                           db_host=os.getenv("DB_HOST", "localhost"),
+                           db_port=os.getenv("DB_PORT", "5432"),
+                           db_user=os.getenv("DB_USER", "estetsys"),
+                           db_pass=os.getenv("DB_PASS", "estetsys"),
+                           alert_email=os.getenv("ALERT_EMAIL", ""))
 
 @app.route('/api/vendas')
 @login_required(allowed_levels=['2', '3'])
 def api_vendas():
-    db = load_db()
-    vendas_list = db.get('vendas', [])
     busca = request.args.get('busca', '').strip().lower()
+    vendas_list = []
+    
+    if TipConDB == 1:
+        db = load_db()
+        vendas_list = db.get('vendas', [])
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT VND_CODIGO, VND_NOMECLI, VND_TOTAL, VND_NOMEPRD, VND_DATA FROM VENDAS WHERE D_E_L_E_T_ IS NULL")
+        for r in cur.fetchall():
+            try:
+                itens = json.loads(r[3])
+            except:
+                itens = [{'nome': r[3], 'quantidade': 1}]
+            vendas_list.append({'id': r[0], 'cliente': r[1], 'total': r[2], 'itens': itens, 'data': r[4]})
+        cur.close()
+        conn.close()
     
     if busca:
         vendas_list = [v for v in vendas_list if busca in str(v.get('cliente', '')).lower() or busca == str(v.get('id', ''))]
         
     return jsonify(vendas_list)
+
+@app.route('/api/clientes')
+@login_required(allowed_levels=['2', '3'])
+def api_clientes():
+    busca_id = request.args.get('clientID', '').strip()
+    busca_nome = request.args.get('clientName', '').strip().lower()
+    clientes_list = []
+    
+    try:
+        _TipConDB = TipConDB
+    except NameError:
+        _TipConDB = 1
+        
+    if _TipConDB == 1:
+        db = load_db()
+        for c in db.get('clientes', []):
+            if busca_id and str(c.get('id', '')) != busca_id: continue
+            if busca_nome and busca_nome not in str(c.get('nome', '')).lower(): continue
+            clientes_list.append(c)
+    else:
+        conn = get_db_connection() # Certifique-se que essa função existe no seu arquivo real
+        cur = conn.cursor()
+        src = "SELECT CLI_CODIGO, CLI_NOME, CLI_DOC, CLI_TEL FROM CLIENTE WHERE D_E_L_E_T_ IS NULL"
+        params = []
+        if busca_id:
+            src += " AND CLI_CODIGO::text = %s"
+            params.append(busca_id)
+        if busca_nome:
+            src += " AND CLI_NOME ILIKE %s"
+            params.append(f"%{busca_nome}%")
+        
+        cur.execute(src, tuple(params))
+        for r in cur.fetchall():
+            clientes_list.append({'id': r[0], 'nome': r[1], 'email': r[2], 'telefone': r[3]})
+        cur.close()
+        conn.close()
+        
+    return jsonify(clientes_list)
+
+@app.route('/api/produtos')
+@login_required(allowed_levels=['2', '3'])
+def api_produtos():
+    busca_id = request.args.get('productID', '').strip()
+    busca_nome = request.args.get('productName', '').strip().lower()
+    produtos_list = []
+    
+    try:
+        _TipConDB = TipConDB
+    except NameError:
+        _TipConDB = 1
+        
+    if _TipConDB == 1:
+        db = load_db()
+        for p in db.get('produtos', []):
+            if busca_id and str(p.get('id', '')) != busca_id: continue
+            if busca_nome and busca_nome not in str(p.get('nome', '')).lower(): continue
+            produtos_list.append(p)
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        src = "SELECT PRD_CODIGO, PRD_NOME, PRD_PRECO FROM PRODUTO WHERE D_E_L_E_T_ IS NULL"
+        params = []
+        if busca_id:
+            src += " AND PRD_CODIGO::text = %s"
+            params.append(busca_id)
+        if busca_nome:
+            src += " AND PRD_NOME ILIKE %s"
+            params.append(f"%{busca_nome}%")
+        
+        cur.execute(src, tuple(params))
+        for r in cur.fetchall():
+            produtos_list.append({'id': r[0], 'nome': r[1], 'preco': r[2]})
+        cur.close()
+        conn.close()
+        
+    return jsonify(produtos_list)
+
+@app.route('/api/servicos')
+@login_required(allowed_levels=['2', '3'])
+def api_servicos():
+    busca_id = request.args.get('srvID', '').strip()
+    busca_nome = request.args.get('serviceName', '').strip().lower()
+    servicos_list = []
+    
+    try:
+        _TipConDB = TipConDB
+    except NameError:
+        _TipConDB = 1
+        
+    if _TipConDB == 1:
+        db = load_db()
+        for s in db.get('servicos', []):
+            if busca_id and str(s.get('id', '')) != busca_id: continue
+            if busca_nome and busca_nome not in str(s.get('nome', '')).lower(): continue
+            servicos_list.append(s)
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        src = "SELECT SRV_CODIGO, SRV_NOME, SRV_PRECO FROM SERVICO WHERE D_E_L_E_T_ IS NULL"
+        params = []
+        if busca_id:
+            src += " AND SRV_CODIGO::text = %s"
+            params.append(busca_id)
+        if busca_nome:
+            src += " AND SRV_NOME ILIKE %s"
+            params.append(f"%{busca_nome}%")
+        
+        cur.execute(src, tuple(params))
+        for r in cur.fetchall():
+            servicos_list.append({'id': r[0], 'nome': r[1], 'preco': r[2]})
+        cur.close()
+        conn.close()
+        
+    return jsonify(servicos_list)
+
+@app.route('/update_cliente', methods=['POST'])
+@login_required(allowed_levels=['2', '3'])
+def update_cliente():
+    id_cliente = request.form.get('id', type=int)
+    nome = request.form.get('nome')
+    email = request.form.get('email')
+    telefone = request.form.get('telefone')
+    
+    try:
+        _TipConDB = TipConDB
+    except NameError:
+        _TipConDB = 1
+        
+    if _TipConDB == 1:
+        db = load_db()
+        for c in db.get('clientes', []):
+            # Evitar erros caso 'id' venha sem tipo no DB local
+            if int(c.get('id', 0)) == id_cliente:
+                c['nome'] = nome
+                c['email'] = email
+                c['telefone'] = telefone
+                break
+        save_db(db)
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        # Sincroniza a atualização no Postgre
+        cur.execute("UPDATE CLIENTE SET CLI_NOME=%s, CLI_DOC=%s, CLI_TEL=%s WHERE CLI_CODIGO::text = %s", 
+                    (nome, email, telefone, str(id_cliente)))
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+    flash('Cliente atualizado com sucesso!')
+    return redirect(url_for('cadastro_clientes'))
+
+@app.route('/proc_prd', methods=["GET"])
+@login_required(allowed_levels=['2', '3'])
+def proc_produto():
+    data = request.args
+    productID = data.get('productID', '').strip()
+    productName = data.get('productName', '').strip()
+    rows = []
+    if TipConDB == 1:
+        db = load_db()
+        for p in db['produtos']:
+            if productID and str(p.get('id', '')) != productID: continue
+            if productName and productName.lower() not in str(p.get('nome', '')).lower(): continue
+            rows.append(p)
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        src = "SELECT PRD_CODIGO, PRD_NOME, PRD_PRECO FROM PRODUTO WHERE D_E_L_E_T_ IS NULL"
+        params = []
+        if productID:
+            src += " AND PRD_CODIGO::text = %s"
+            params.append(productID)
+        if productName:
+            src += " AND PRD_NOME ILIKE %s"
+            params.append(f"%{productName}%")
+        cur.execute(src, tuple(params))
+        for r in cur.fetchall():
+            rows.append({'id': r[0], 'nome': r[1], 'preco': r[2]})
+        cur.close()
+        conn.close()
+    return render_template("cadastro_produtos.html", rows=rows, alert="Produtos filtrados!")
+
+@app.route('/proc_cliente', methods=["GET"])
+@login_required(allowed_levels=['2', '3'])
+def proc_cliente():
+    data = request.args
+    clientID = data.get('clientID', '').strip()
+    clientName = data.get('clientName', '').strip()
+    rows = []
+    if TipConDB == 1:
+        db = load_db()
+        for c in db['clientes']:
+            if clientID and str(c.get('id', '')) != clientID: continue
+            if clientName and clientName.lower() not in str(c.get('nome', '')).lower(): continue
+            rows.append(c)
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        src = "SELECT CLI_CODIGO, CLI_NOME, CLI_DOC, CLI_TEL FROM CLIENTE WHERE D_E_L_E_T_ IS NULL"
+        params = []
+        if clientID:
+            src += " AND CLI_CODIGO::text = %s"
+            params.append(clientID)
+        if clientName:
+            src += " AND CLI_NOME ILIKE %s"
+            params.append(f"%{clientName}%")
+        cur.execute(src, tuple(params))
+        for r in cur.fetchall():
+            rows.append({'id': r[0], 'nome': r[1], 'email': r[2], 'telefone': r[3]})
+        cur.close()
+        conn.close()
+    return render_template("cadastro_clientes.html", rows=rows, alert="Clientes filtrados!")
+
+@app.route('/proc_srv', methods=["GET"])
+@login_required(allowed_levels=['2', '3'])
+def proc_servico():
+    data = request.args
+    srvID = data.get('srvID', '').strip()
+    srvName = data.get('serviceName', '').strip()
+    rows = []
+    if TipConDB == 1:
+        db = load_db()
+        for s in db['servicos']:
+            if srvID and str(s.get('id', '')) != srvID: continue
+            if srvName and srvName.lower() not in str(s.get('nome', '')).lower(): continue
+            rows.append(s)
+    else:
+        conn = get_db_connection()
+        cur = conn.cursor()
+        src = "SELECT SRV_CODIGO, SRV_NOME, SRV_PRECO FROM SERVICO WHERE D_E_L_E_T_ IS NULL"
+        params = []
+        if srvID:
+            src += " AND SRV_CODIGO::text = %s"
+            params.append(srvID)
+        if srvName:
+            src += " AND SRV_NOME ILIKE %s"
+            params.append(f"%{srvName}%")
+        cur.execute(src, tuple(params))
+        for r in cur.fetchall():
+            rows.append({'id': r[0], 'nome': r[1], 'preco': r[2]})
+        cur.close()
+        conn.close()
+    return render_template("cadastro_servicos.html", rows=rows, alert="Serviços filtrados!")
+
+@app.route('/logs')
+@login_required(allowed_levels=['3'])
+def ver_logs_sistema():
+    """ Rota restrita para o Admin (Nível 3) visualizar logs de erros """
+    log_file = os.path.join(os.path.dirname(__file__), 'erros_sistema.log')
+    
+    if os.path.exists(log_file):
+        with open(log_file, 'r', encoding='utf-8') as f:
+            conteudo = f.read()
+        # Retorna o arquivo como texto puro para que o navegador não processe tags HTML que possam existir
+        return Response(conteudo, mimetype='text/plain')
+    else:
+        return "Nenhum log de erros foi gerado pelo sistema ainda.", 404
+
+@app.route('/limpar_logs', methods=['POST'])
+@login_required(allowed_levels=['3'])
+def limpar_logs():
+    """ Rota para esvaziar o arquivo de logs através de um botão no HTML """
+    log_file = os.path.join(os.path.dirname(__file__), 'erros_sistema.log')
+    if os.path.exists(log_file):
+        open(log_file, 'w').close() # Abre o arquivo em modo escrita e já o fecha, limpando seu conteúdo
+        flash('Logs limpados com sucesso!', 'success')
+    else:
+        flash('Arquivo de log não encontrado.', 'warning')
+    return redirect(url_for('configuracoes'))
 
 if __name__ == '__main__':
     # Executa o servidor Flask na porta 5000 com reinício automático

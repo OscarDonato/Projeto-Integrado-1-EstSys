@@ -83,4 +83,39 @@
 
   <div id="overlay" class="overlay"></div>
 
+<script>
+// Sobrescrevendo a função buscarItem() que estava no arquivo setup.js
+// agora utilizando a nova Fetch API 
+function buscarItem() {
+  const tipo = document.getElementById('tipoItem').value; // 'produto' ou 'servico'
+  const texto = document.getElementById('buscaTexto').value;
+  
+  const params = new URLSearchParams();
+  if (tipo === 'produto') {
+    if (texto) params.append('productName', texto);
+  } else {
+    if (texto) params.append('serviceName', texto);
+  }
+
+  const url = tipo === 'produto' ? `/api/produtos?${params.toString()}` : `/api/servicos?${params.toString()}`;
+  
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector('.table_container tbody');
+      tbody.innerHTML = '';
+      data.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.id}</td>
+          <td>${item.nome}</td>
+          <td>${item.descricao || item.preco || ''}</td>
+          <td><button type="button" class="addItem" style="padding: 5px;" onclick="adicionarAoCarrinho(${item.id}, '${item.nome}', '${item.preco}')">Add</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })
+    .catch(error => console.error('Erro ao buscar item:', error));
+}
+</script>
 {% endblock %}
